@@ -14,6 +14,14 @@
   --muted: #5a6a7a;
   --border: #d0dce8;
   --max-width: 900px;
+  --sidebar-width: 230px;
+  --layout-max: 1200px;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Leaves a little breathing room above sections when jumping via anchors. */
+  scroll-padding-top: 20px;
 }
 
 body {
@@ -44,11 +52,79 @@ header .subtitle {
   margin-bottom: 0;
 }
 
-/* ── Main Layout ── */
-main {
-  max-width: var(--max-width);
+/* ── Layout (sidebar + main) ── */
+.layout {
+  max-width: var(--layout-max);
   margin: 40px auto;
   padding: 0 20px;
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+/* ── Sidebar Navigation ── */
+.sidebar {
+  flex-shrink: 0;
+  width: var(--sidebar-width);
+  position: sticky;
+  top: 20px;
+}
+
+.side-nav {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 16px;
+  box-shadow: 0 2px 12px rgba(26, 58, 92, 0.07);
+}
+
+.side-nav-title {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.side-nav ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.side-nav-link {
+  display: block;
+  font-size: 0.92rem;
+  color: var(--text);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+  line-height: 1.35;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.side-nav-link:hover {
+  background: var(--light-bg);
+  color: var(--accent);
+}
+
+.side-nav-link.active {
+  background: var(--light-bg);
+  color: var(--primary);
+  border-left-color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── Main Layout ── */
+main {
+  flex: 1;
+  min-width: 0;
+  max-width: var(--max-width);
   display: flex;
   flex-direction: column;
   gap: 40px;
@@ -61,6 +137,7 @@ main {
   border-radius: 10px;
   padding: 32px 36px;
   box-shadow: 0 2px 12px rgba(26, 58, 92, 0.07);
+  scroll-margin-top: 20px;
 }
 
 /* ── Profile Section ── */
@@ -231,6 +308,40 @@ footer {
 }
 
 /* ── Responsive ── */
+@media (max-width: 960px) {
+  .layout {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .sidebar {
+    position: static;
+    width: 100%;
+  }
+
+  main {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .side-nav ul {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .side-nav-link {
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    padding: 6px 10px;
+  }
+
+  .side-nav-link.active {
+    border-left: none;
+    border-bottom-color: var(--accent);
+  }
+}
+
 @media (max-width: 640px) {
   .profile {
     flex-direction: column;
