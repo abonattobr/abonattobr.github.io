@@ -120,6 +120,24 @@ header .subtitle {
   font-weight: 600;
 }
 
+/* Featured link (Selected Publications) — bold and burgundy. */
+.side-nav-link--featured {
+  color: #800020;            /* burgundy / bordô */
+  font-weight: 700;
+}
+
+.side-nav-link--featured:hover {
+  color: #5e0018;            /* slightly darker on hover */
+  background: var(--light-bg);
+}
+
+/* Keep burgundy even when this section is the active one. */
+.side-nav-link--featured.active {
+  color: #800020;
+  border-left-color: #800020;
+  font-weight: 700;
+}
+
 /* ── Main Layout ── */
 main {
   flex: 1;
@@ -339,6 +357,11 @@ footer {
   .side-nav-link.active {
     border-left: none;
     border-bottom-color: var(--accent);
+  }
+
+  .side-nav-link--featured.active {
+    border-left: none;
+    border-bottom-color: #800020;
   }
 }
 
