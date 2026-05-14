@@ -257,6 +257,11 @@ main {
   letter-spacing: 0.2px;
 }
 
+/* Publications section title — match the burgundy used in the sidebar. */
+#publications .section-title {
+  color: #9b1c2d;
+}
+
 /* ── Bio Text ── */
 .bio-text {
   color: var(--text);
