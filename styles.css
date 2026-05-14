@@ -122,7 +122,7 @@ header .subtitle {
 
 /* Featured link (Selected Publications) — bold and burgundy. */
 .side-nav-link--featured {
-  color: #800020;            /* burgundy / bordô */
+  color: #9b1c2d;            /* burgundy / bordô */
   font-weight: 700;
 }
 
@@ -133,8 +133,8 @@ header .subtitle {
 
 /* Keep burgundy even when this section is the active one. */
 .side-nav-link--featured.active {
-  color: #800020;
-  border-left-color: #800020;
+  color: #9b1c2d;
+  border-left-color: #9b1c2d;
   font-weight: 700;
 }
 
@@ -361,7 +361,7 @@ footer {
 
   .side-nav-link--featured.active {
     border-left: none;
-    border-bottom-color: #800020;
+    border-bottom-color: #9b1c2d;
   }
 }
 
