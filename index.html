@@ -22,6 +22,7 @@
         <ul>
           <li><a href="#short-bio" class="side-nav-link">Short Bio</a></li>
           <li><a href="#current-research" class="side-nav-link">Current Research Topics</a></li>
+          <li><a href="#teaching" class="side-nav-link">Teaching</a></li>
           <li><a href="#publications" class="side-nav-link side-nav-link--featured">Selected Publications</a></li>
         </ul>
       </nav>
@@ -122,6 +123,25 @@
           optimize laser-plasma accelerators for medical applications, including proton and VHEE
           radiotherapy as well as photonuclear radioisotope production.
         </p>
+      </section>
+
+      <!-- ── Teaching ── -->
+      <!-- The course / topic / simulation tree below is rendered from teaching/catalog.js. -->
+      <section id="teaching" class="card">
+        <h2 class="section-title">Teaching</h2>
+        <p class="teaching-intro">
+          Courses I currently teach at UFCSPA. Select a course and then a topic to open its
+          interactive simulations. They are written in Portuguese and designed to be shown
+          full screen in the classroom.
+        </p>
+        <div id="teaching-tree" class="teaching-tree"></div>
+        <noscript>
+          <ul class="sim-list">
+            <li><a href="teaching/fisica-iv/interferencia-difracao/soma-de-ondas.html">Física IV · Interferência e Difração · Soma de ondas senoidais</a></li>
+            <li><a href="teaching/fisica-iv/interferencia-difracao/experimento-de-young.html">Física IV · Interferência e Difração · Experimento de Young</a></li>
+            <li><a href="teaching/fisica-iv/interferencia-difracao/fenda-dupla.html">Física IV · Interferência e Difração · Fenda dupla: interferência e difração</a></li>
+          </ul>
+        </noscript>
       </section>
 
       <!-- ── Publications ── -->
@@ -317,6 +337,62 @@
   <footer>
     <p>Alexandre Bonatto &ndash; 2026</p>
   </footer>
+
+  <script src="teaching/catalog.js"></script>
+  <script>
+    // Teaching: build the course > topic > simulation tree from teaching/catalog.js.
+    (function () {
+      const box = document.getElementById('teaching-tree');
+      const T = window.TEACHING;
+      if (!box || !T) return;
+      const el = (tag, cls, txt) => {
+        const e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (txt != null) e.textContent = txt;
+        return e;
+      };
+      const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+
+      T.courses.forEach(course => {
+        if (!course.topics.length) {
+          const row = el('div', 'course course--empty');
+          row.append(el('span', 'course-name', course.name), el('span', 'course-meta', 'Materials coming soon'));
+          box.append(row);
+          return;
+        }
+        const c = el('details', 'course');
+        const cs = el('summary');
+        cs.append(el('span', 'course-name', course.name), el('span', 'course-meta', plural(course.topics.length, 'topic', 'topics')));
+        c.append(cs);
+        const body = el('div', 'course-body');
+        course.topics.forEach(topic => {
+          const t = el('details', 'topic');
+          const ts = el('summary');
+          ts.append(el('span', 'topic-name', topic.name), el('span', 'course-meta', plural(topic.sims.length, 'simulation', 'simulations')));
+          t.append(ts);
+          const list = el('ul', 'sim-list');
+          topic.sims.forEach(sim => {
+            const li = el('li');
+            const a = el('a', 'sim-link');
+            a.href = 'teaching/' + course.id + '/' + topic.id + '/' + sim.slug + '.html';
+            a.append(el('span', 'sim-name', sim.name), el('span', 'sim-desc', sim.desc));
+            li.append(a);
+            list.append(li);
+          });
+          t.append(list);
+          body.append(t);
+        });
+        c.append(body);
+        box.append(c);
+      });
+
+      // Coming back from a simulation ("← Teaching"): reopen the tree where the visitor left it.
+      if (location.hash === '#teaching') {
+        box.querySelectorAll('details').forEach(d => { d.open = true; });
+        document.getElementById('teaching').scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+    })();
+  </script>
 
   <script>
     // Scroll-spy: highlight the sidebar link of the section currently in view.

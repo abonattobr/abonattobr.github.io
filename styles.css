@@ -320,6 +320,145 @@ main {
   text-decoration: underline;
 }
 
+/* ── Teaching ── */
+.teaching-intro {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+
+.teaching-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.course {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  background: var(--light-bg);
+}
+
+.course > summary,
+.course--empty,
+.topic > summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+}
+
+.course > summary,
+.topic > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.course > summary::-webkit-details-marker,
+.topic > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Disclosure arrow that turns when the item is open. */
+.course > summary .course-name::before,
+.topic > summary .topic-name::before {
+  content: "\25B8";
+  display: inline-block;
+  width: 1.1em;
+  color: var(--accent);
+  transition: transform 0.15s ease;
+}
+
+.course[open] > summary .course-name::before,
+.topic[open] > summary .topic-name::before {
+  transform: rotate(90deg);
+}
+
+.course > summary:hover .course-name,
+.topic > summary:hover .topic-name {
+  color: var(--accent);
+}
+
+.course-name {
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 1.05rem;
+}
+
+.course--empty .course-name {
+  padding-left: 1.1em;
+}
+
+.course-meta {
+  font-size: 0.82rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.course-body {
+  padding: 0 18px 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.topic {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.topic > summary {
+  padding: 10px 14px;
+}
+
+.topic-name {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.sim-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 14px 14px 14px;
+}
+
+.sim-link {
+  display: block;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sim-link:hover,
+.sim-link:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 3px 14px rgba(46, 124, 184, 0.13);
+}
+
+.sim-name {
+  display: block;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.sim-name::after {
+  content: " \2192";
+}
+
+.sim-desc {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 /* ── Footer ── */
 footer {
   text-align: center;

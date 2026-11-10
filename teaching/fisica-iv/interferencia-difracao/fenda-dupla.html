@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fenda dupla: interferência e difração · Física IV · Prof. Alexandre Bonatto</title>
+  <meta name="description" content="Simulação do padrão de Fraunhofer de fenda dupla: largura a, distância d e comprimento de onda λ ajustáveis, com mapa de intensidade e curva de nível." />
+  <link rel="stylesheet" href="../../assets/sim.css" />
+  <style>
+    .strip { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .4rem 1.6rem; align-items: center; padding: .25rem .5rem .15rem; border-top: 1px solid #e3e9f0; }
+    .strip .vals { font-family: var(--mono); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+    .strip .vals small { display: block; font-family: var(--ui); font-size: .85rem; color: #5a554c; margin-top: .15rem; }
+    .strip .fbox { display: grid; justify-items: center; gap: .1rem; }
+    .strip .numeric { font-family: var(--mono); font-size: .8rem; color: #3b3731; text-align: center; }
+    .cv.profile { flex: 1.35; }
+    @media (max-width: 1200px) { .strip { grid-template-columns: minmax(0, 1fr); } .strip .fbox { justify-items: start; overflow-x: auto; } }
+  </style>
+</head>
+<body data-course="fisica-iv" data-topic="interferencia-difracao" data-sim="fenda-dupla">
+
+  <main class="stage">
+    <h1 class="sr-only">Fenda dupla: interferência e difração</h1>
+
+    <section class="view">
+      <div class="sheet grow">
+        <div class="cv profile"><canvas id="profile" aria-label="Perfil de intensidade I(θ)"></canvas></div>
+        <div class="cv wide"><canvas id="map" aria-label="Mapa de intensidade na tela"></canvas></div>
+        <div class="strip">
+          <div class="vals"><span id="readout">d = 0,0 µm · a = 15,0 µm · λ = 633 nm · d/a = 0,00</span><small id="fringeNote"></small></div>
+          <div class="fbox" aria-label="Fórmula da intensidade">
+            <div class="eq">
+              <span><span class="v">I</span>(<span class="v">θ</span>) = <span class="v">I</span><sub>0</sub></span>
+              <span class="factor inter">
+                <span class="f"><span>cos<sup>2</sup></span><span class="paren">(</span><span class="frac"><span class="num">π <span class="v">d</span> sen <span class="v">θ</span></span><span class="den"><span class="v">λ</span></span></span><span class="paren">)</span></span>
+                <span class="cap">interferência</span>
+              </span>
+              <span class="factor diff">
+                <span class="f"><span>sinc<sup>2</sup></span><span class="paren">(</span><span class="frac"><span class="num">π <span class="v">a</span> sen <span class="v">θ</span></span><span class="den"><span class="v">λ</span></span></span><span class="paren">)</span></span>
+                <span class="cap">difração</span>
+              </span>
+            </div>
+            <div class="numeric" id="eqNum"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="card">
+        <h2>Fendas e luz</h2>
+        <div class="ctrl">
+          <label for="d"><span>Distância entre as fendas, d</span><output id="dOut" for="d">0,0 µm</output></label>
+          <input type="range" id="d" min="0" max="300" step="0.5" value="0" />
+          <div class="presets" id="presets" role="group" aria-label="Valores de d em múltiplos de a">
+            <button type="button" data-k="0">d = 0</button>
+            <button type="button" data-k="1">a</button>
+            <button type="button" data-k="2">2a</button>
+            <button type="button" data-k="3">3a</button>
+            <button type="button" data-k="4">4a</button>
+            <button type="button" data-k="6">6a</button>
+          </div>
+          <div class="warn" id="warn"></div>
+        </div>
+        <div class="ctrl">
+          <label for="a"><span>Largura das fendas, a</span><output id="aOut" for="a">15,0 µm</output></label>
+          <input type="range" id="a" min="1" max="60" step="0.5" value="15" />
+        </div>
+        <div class="ctrl">
+          <label for="lambda"><span>Comprimento de onda, λ</span><output id="lambdaOut" for="lambda">633 nm</output></label>
+          <input type="range" id="lambda" min="380" max="750" step="1" value="633" />
+        </div>
+        <div class="ctrl">
+          <label for="thmax"><span>Faixa angular, ±θ<sub>max</sub></span><output id="thmaxOut" for="thmax">9,0°</output></label>
+          <input type="range" id="thmax" min="1" max="40" step="0.5" value="9" />
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Animação de d</h2>
+        <div class="ctrl row">
+          <button type="button" class="btn primary" id="play">▶ Animar d</button>
+          <label class="check"><input type="checkbox" id="pingpong" checked /> ida e volta</label>
+        </div>
+        <div class="ctrl">
+          <label for="dMax"><span>d máximo da animação</span><output id="dMaxOut" for="dMax">90,0 µm</output></label>
+          <input type="range" id="dMax" min="5" max="300" step="0.5" value="90" />
+        </div>
+        <div class="ctrl">
+          <label for="speed"><span>Velocidade</span><output id="speedOut" for="speed">7,5 µm/s</output></label>
+          <input type="range" id="speed" min="0.5" max="60" step="0.5" value="7.5" />
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Exibição</h2>
+        <div class="ctrl row">
+          <label class="check" for="contour"><input type="checkbox" id="contour" /> Curva de nível em I/I₀ =</label>
+          <input type="number" id="level" min="0.0001" max="0.99" step="0.001" value="0.005" aria-label="Valor da curva de nível" />
+        </div>
+        <div class="ctrl"><label class="check"><input type="checkbox" id="showEnv" checked /> Envoltória de difração sinc²</label></div>
+        <div class="ctrl"><label class="check"><input type="checkbox" id="showCos" /> Fator de interferência cos²</label></div>
+        <div class="ctrl"><label class="check"><input type="checkbox" id="showZeros" /> Zeros da difração (a·senθ = mλ)</label></div>
+        <div class="ctrl">
+          <label for="sigma"><span>Largura vertical do feixe</span><output id="sigmaOut" for="sigma">0,35</output></label>
+          <input type="range" id="sigma" min="0.1" max="0.8" step="0.01" value="0.35" />
+        </div>
+        <div class="ctrl">
+          <label for="gamma"><span>Contraste do mapa (γ)</span><output id="gammaOut" for="gamma">1,00</output></label>
+          <input type="range" id="gamma" min="0.25" max="1.5" step="0.05" value="1" />
+        </div>
+      </div>
+
+      <p class="note">sinc(x) = sen(x)/x. Mínimos de difração: a·senθ = mλ. Máximos de interferência: d·senθ = mλ. Com d/a inteiro, as ordens m = d/a, 2d/a, … desaparecem (ordens ausentes). O mapa usa um perfil gaussiano vertical.</p>
+    </aside>
+  </main>
+
+  <script src="../../catalog.js"></script>
+  <script src="../../assets/sim.js"></script>
+  <script>
+  (function () {
+    const { fmt, size, watch, wlToRGB, MONO } = Sim;
+    // unidades internas: a, d em µm; λ em nm; θ em graus
+    const state = { a: 15, d: 0, lambda: 633, thmax: 9, sigma: 0.35, gamma: 1, contour: false, level: 0.005,
+                    showEnv: true, showCos: false, showZeros: false, playing: false, pingpong: true, dMax: 90, speed: 7.5, dir: 1 };
+    const $ = id => document.getElementById(id);
+    const prof = $('profile'), map = $('map');
+    const DEG = Math.PI / 180;
+    const sinc = x => x === 0 ? 1 : Math.sin(x) / x;
+    const lamUm = () => state.lambda / 1000;
+    const env = th => { const s = sinc(Math.PI * state.a * Math.sin(th * DEG) / lamUm()); return s * s; };
+    const cos2 = th => { const c = Math.cos(Math.PI * state.d * Math.sin(th * DEG) / lamUm()); return c * c; };
+    const I = th => env(th) * cos2(th);
+    const margins = k => ({ ml: 16 * k, mr: 16 * k });   // perfil e mapa compartilham o mesmo eixo horizontal
+
+    // paleta do mapa: branco -> tom claro -> cor de λ -> cor escura; refeita quando λ muda
+    const LUT = new Uint8ClampedArray(256 * 3);
+    let fillColor = '#ff5a3c', strokeColor = '#c93a22';
+    function buildPalette() {
+      const [r, g, b] = wlToRGB(state.lambda);
+      const mix = (v, w) => Math.round(255 + (v - 255) * w), dark = (v, w) => Math.round(v * w);
+      const stops = [[0, 255, 255, 255], [0.06, mix(r, .14), mix(g, .14), mix(b, .14)], [0.3, r, g, b],
+                     [0.7, dark(r, .72), dark(g, .72), dark(b, .72)], [1, dark(r, .45), dark(g, .45), dark(b, .45)]];
+      for (let i = 0; i < 256; i++) {
+        const v = i / 255; let j = 0; while (j < stops.length - 2 && v > stops[j + 1][0]) j++;
+        const [p0, r1, g1, b1] = stops[j], [p1, r2, g2, b2] = stops[j + 1], t = (v - p0) / (p1 - p0);
+        LUT[i * 3] = r1 + (r2 - r1) * t; LUT[i * 3 + 1] = g1 + (g2 - g1) * t; LUT[i * 3 + 2] = b1 + (b2 - b1) * t;
+      }
+      fillColor = `rgb(${mix(r, .85)},${mix(g, .85)},${mix(b, .85)})`;
+      strokeColor = `rgb(${dark(r, .7)},${dark(g, .7)},${dark(b, .7)})`;
+    }
+    function niceStep(range, target) {
+      const raw = range / target, p = Math.pow(10, Math.floor(Math.log10(raw)));
+      for (const m of [1, 2, 5, 10]) if (raw <= m * p) return m * p;
+      return 10 * p;
+    }
+
+    function drawProfile() {
+      const s = size(prof); if (!s) return;
+      const { w: W, h: H, k, ctx: c } = s;
+      const { ml, mr } = margins(k), mt = 14 * k, mb = 30 * k, pw = W - ml - mr, ph = H - mt - mb, T = state.thmax;
+      const xs = th => ml + (th + T) / (2 * T) * pw, ys = v => mt + ph - v * ph;
+      c.clearRect(0, 0, W, H); c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+      const N = Math.max(500, Math.floor(pw * 2));
+      const path = fn => { c.beginPath(); for (let i = 0; i <= N; i++) { const th = -T + 2 * T * i / N, x = xs(th), y = ys(fn(th)); i ? c.lineTo(x, y) : c.moveTo(x, y); } };
+      path(I); c.lineTo(xs(T), ys(0)); c.lineTo(xs(-T), ys(0)); c.closePath(); c.fillStyle = fillColor; c.fill();
+      path(I); c.strokeStyle = strokeColor; c.lineWidth = 1.4 * k; c.stroke();
+      if (state.showEnv && state.d > 0) { c.save(); c.setLineDash([7 * k, 5 * k]); path(env); c.strokeStyle = 'rgba(60,50,45,0.7)'; c.lineWidth = 1.4 * k; c.stroke(); c.restore(); }
+      if (state.showCos && state.d > 0) { c.save(); c.setLineDash([2 * k, 3 * k]); path(cos2); c.strokeStyle = 'rgba(42,111,191,0.8)'; c.lineWidth = 1.1 * k; c.stroke(); c.restore(); }
+      if (state.showZeros) {
+        c.save(); c.strokeStyle = 'rgba(42,111,191,0.55)'; c.lineWidth = 1; c.setLineDash([2 * k, 4 * k]);
+        for (let m = 1; ; m++) { const sn = m * lamUm() / state.a; if (sn >= 1) break; const th = Math.asin(sn) / DEG; if (th > T) break;
+          for (const sg of [-1, 1]) { c.beginPath(); c.moveTo(xs(sg * th), mt); c.lineTo(xs(sg * th), ys(0)); c.stroke(); } }
+        c.restore();
+      }
+      c.strokeStyle = '#4a4540'; c.lineWidth = 1; c.beginPath(); c.moveTo(ml, ys(0) + 0.5); c.lineTo(ml + pw, ys(0) + 0.5); c.stroke();
+      c.fillStyle = '#4a4540'; c.font = `${13 * k}px ${MONO}`; c.textAlign = 'center'; c.textBaseline = 'top';
+      const step = niceStep(2 * T, Math.max(4, Math.floor(pw / (95 * k))));
+      for (let th = -Math.floor(T / step) * step; th <= T + 1e-9; th += step) {
+        c.beginPath(); c.moveTo(xs(th), ys(0)); c.lineTo(xs(th), ys(0) + 5 * k); c.stroke();
+        c.fillText(fmt(th, step < 1 ? 1 : 0) + '°', xs(th), ys(0) + 8 * k);
+      }
+      c.textAlign = 'right'; c.fillText('θ', ml + pw, mt); c.textAlign = 'left'; c.fillText('I/I₀', ml, mt);
+      if (state.contour) { c.save(); c.setLineDash([3 * k, 3 * k]); c.strokeStyle = 'rgba(60,50,45,0.5)'; c.beginPath(); c.moveTo(ml, ys(state.level)); c.lineTo(ml + pw, ys(state.level)); c.stroke(); c.restore(); }
+    }
+
+    const off = document.createElement('canvas'), oc = off.getContext('2d');
+    function drawMap() {
+      const s = size(map); if (!s) return;
+      const { w: W, h: H, k, ctx: c } = s, T = state.thmax, { ml, mr } = margins(k), mw = W - ml - mr;
+      c.clearRect(0, 0, W, H); c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+      // o mapa é calculado em resolução de px CSS (leve mesmo em telas grandes) e ampliado com suavização
+      const pw = Math.max(2, Math.min(1600, Math.round(mw))), ph = Math.max(2, Math.min(600, Math.round(H)));
+      if (off.width !== pw || off.height !== ph) { off.width = pw; off.height = ph; }
+      const img = oc.createImageData(pw, ph), dd = img.data;
+      const colI = new Float32Array(pw), rowG = new Float32Array(ph);
+      for (let i = 0; i < pw; i++) colI[i] = I(-T + 2 * T * (i + 0.5) / pw);
+      for (let j = 0; j < ph; j++) { const y = -1 + 2 * (j + 0.5) / ph; rowG[j] = Math.exp(-(y * y) / (state.sigma * state.sigma)); }
+      const g = state.gamma;
+      for (let j = 0; j < ph; j++) { const rj = rowG[j]; for (let i = 0; i < pw; i++) {
+        const v = Math.pow(colI[i] * rj, g), q = Math.min(255, Math.round(v * 255)) * 3, p = (j * pw + i) * 4;
+        dd[p] = LUT[q]; dd[p + 1] = LUT[q + 1]; dd[p + 2] = LUT[q + 2]; dd[p + 3] = 255;
+      } }
+      oc.putImageData(img, 0, 0);
+      c.imageSmoothingEnabled = true; c.drawImage(off, ml, 0, mw, H);
+      if (!state.contour) return;
+      // curva de nível I(θ)·exp(-(y/σ)²) = c0  =>  y = ±σ·sqrt(ln(I/c0)), por regiões contíguas
+      const c0 = state.level, N = Math.max(800, Math.floor(mw * 2));
+      const xs = i => ml + i / N * mw, ysc = y => (y + 1) / 2 * H;
+      let inRun = false, top = [], bot = [];
+      const flush = () => {
+        if (top.length >= 2) { c.beginPath(); top.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]));
+          for (let i = bot.length - 1; i >= 0; i--) c.lineTo(bot[i][0], bot[i][1]);
+          c.closePath(); c.strokeStyle = 'rgba(60,50,45,0.75)'; c.lineWidth = 1.3 * k; c.stroke(); }
+        top = []; bot = [];
+      };
+      for (let i = 0; i <= N; i++) {
+        const Iu = I(-T + 2 * T * i / N);
+        if (Iu > c0) {
+          const y = Math.min(1, state.sigma * Math.sqrt(Math.log(Iu / c0)));
+          if (!inRun) { inRun = true; top.push([xs(i), ysc(0)]); bot.push([xs(i), ysc(0)]); }
+          top.push([xs(i), ysc(-y)]); bot.push([xs(i), ysc(y)]);
+        } else if (inRun) { inRun = false; top.push([xs(i), ysc(0)]); bot.push([xs(i), ysc(0)]); flush(); }
+      }
+      if (inRun) flush();
+    }
+
+    function updateText() {
+      const { a, d, lambda } = state, r = d / a, near = Math.round(r);
+      $('readout').textContent = `d = ${fmt(d, 1)} µm · a = ${fmt(a, 1)} µm · λ = ${lambda} nm · d/a = ${fmt(r, 2)}`;
+      $('dOut').textContent = fmt(d, 1) + ' µm'; $('aOut').textContent = fmt(a, 1) + ' µm'; $('lambdaOut').textContent = lambda + ' nm';
+      let note;
+      if (d === 0) note = 'd = 0: fenda única, só a envoltória de difração sinc².';
+      else if (Math.abs(r - near) < 0.02 && near >= 1) note = `d/a = ${near}: as ordens m = ±${near}${near < 4 ? ', ±' + 2 * near : ''}, … caem nos zeros da envoltória (ordens ausentes); ${2 * near - 1} franjas no máximo central.`;
+      else note = `≈ ${Math.max(1, 2 * Math.ceil(r) - 1)} franjas de interferência dentro do máximo central de difração.`;
+      $('fringeNote').textContent = note;
+      const lam = lambda / 1000, kd = Math.PI * d / lam, ka = Math.PI * a / lam;   // π d/λ e π a/λ, adimensionais
+      $('eqNum').textContent = d > 0
+        ? `valores atuais: I(θ)/I₀ = cos²(${fmt(kd, 1)} · senθ) · sinc²(${fmt(ka, 1)} · senθ)`
+        : `valores atuais (d = 0, cos² = 1): I(θ)/I₀ = sinc²(${fmt(ka, 1)} · senθ)`;
+      $('warn').textContent = (d > 0 && d < a) ? 'Com 0 < d < a as fendas se sobreporiam; vale só como limite matemático.' : '';
+      document.querySelectorAll('#presets button').forEach(el => el.setAttribute('aria-pressed', String(Math.abs(+el.dataset.k * a - d) < 1e-9)));
+    }
+    const render = () => { drawProfile(); drawMap(); };
+    const update = () => { updateText(); render(); };
+
+    const bind = (id, key, out, fmtFn, after) => {
+      $(id).addEventListener('input', e => { state[key] = +e.target.value; if (out) $(out).textContent = fmtFn(state[key]); (after || update)(); });
+    };
+    bind('d', 'd'); bind('a', 'a');
+    bind('lambda', 'lambda', null, null, () => { buildPalette(); update(); });
+    bind('thmax', 'thmax', 'thmaxOut', v => fmt(v, 1) + '°');
+    bind('sigma', 'sigma', 'sigmaOut', v => fmt(v, 2));
+    bind('gamma', 'gamma', 'gammaOut', v => fmt(v, 2));
+    bind('dMax', 'dMax', 'dMaxOut', v => fmt(v, 1) + ' µm', () => {});
+    bind('speed', 'speed', 'speedOut', v => fmt(v, 1) + ' µm/s', () => {});
+    $('level').addEventListener('input', e => { const v = +e.target.value; if (v > 0 && v < 1) { state.level = v; render(); } });
+    for (const id of ['contour', 'showEnv', 'showCos', 'showZeros']) $(id).addEventListener('change', e => { state[id] = e.target.checked; render(); });
+    $('pingpong').addEventListener('change', e => { state.pingpong = e.target.checked; });
+    $('presets').addEventListener('click', e => { const b = e.target.closest('button[data-k]'); if (!b) return;
+      state.d = Math.min(300, +b.dataset.k * state.a); $('d').value = state.d; update(); });
+
+    let last = null;
+    function loop(ts) {
+      if (!state.playing) return;
+      const dt = last != null ? Math.min(0.05, (ts - last) / 1000) : 0; last = ts;
+      let v = state.d + state.dir * state.speed * dt;
+      if (state.pingpong) { if (v >= state.dMax) { v = state.dMax; state.dir = -1; } else if (v <= 0) { v = 0; state.dir = 1; } }
+      else if (v >= state.dMax) v = 0;
+      state.d = Math.round(v * 10) / 10; $('d').value = state.d; update();
+      requestAnimationFrame(loop);
+    }
+    $('play').addEventListener('click', () => {
+      state.playing = !state.playing; $('play').textContent = state.playing ? '❚❚ Pausar' : '▶ Animar d';
+      if (state.playing) { last = null; state.dir = state.d >= state.dMax ? -1 : 1; requestAnimationFrame(loop); }
+    });
+
+    buildPalette(); watch(render); update();
+  })();
+  </script>
+</body>
+</html>

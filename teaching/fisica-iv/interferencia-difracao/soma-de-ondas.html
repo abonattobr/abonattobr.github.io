@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Soma de ondas senoidais · Física IV · Prof. Alexandre Bonatto</title>
+  <meta name="description" content="Simulação: soma de duas ondas senoidais com controle da diferença de fase, mostrando interferência construtiva e destrutiva." />
+  <link rel="stylesheet" href="../../assets/sim.css" />
+</head>
+<body data-course="fisica-iv" data-topic="interferencia-difracao" data-sim="soma-de-ondas">
+
+  <main class="stage">
+    <h1 class="sr-only">Soma de ondas senoidais</h1>
+
+    <section class="view">
+      <div class="sheet grow">
+        <div class="legend">
+          <span class="l1 dash"><i></i> y₁ = A sen(kx − ωt)</span>
+          <span class="l2 dash"><i></i> y₂ = A₂ sen(kx − ωt + Δφ)</span>
+          <span class="ls"><i></i> y₁ + y₂</span>
+          <span>eixo horizontal: kx</span>
+        </div>
+        <div class="cv"><canvas id="plot" aria-label="Ondas y1, y2 e sua soma"></canvas></div>
+        <p class="note">Com A₂ = A, a soma é y = 2A cos(Δφ/2) · sen(kx − ωt + Δφ/2). Em Δφ = 0 ou 2π a amplitude dobra (construtiva total); em Δφ = π as ondas se cancelam (destrutiva total).</p>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="card">
+        <h2>Controles</h2>
+        <div class="ctrl">
+          <label for="phase"><span>Diferença de fase Δφ</span><output id="phaseOut" for="phase">0° = 0 rad</output></label>
+          <input type="range" id="phase" min="0" max="360" step="1" value="0" />
+          <div class="presets" id="presets" role="group" aria-label="Valores de Δφ">
+            <button type="button" data-deg="0">0</button>
+            <button type="button" data-deg="90">π/2</button>
+            <button type="button" data-deg="180">π</button>
+            <button type="button" data-deg="270">3π/2</button>
+            <button type="button" data-deg="360">2π</button>
+          </div>
+        </div>
+        <div class="ctrl">
+          <label for="amp2"><span>Amplitude da onda 2 (A₂/A)</span><output id="amp2Out" for="amp2">1,00</output></label>
+          <input type="range" id="amp2" min="0" max="1" step="0.05" value="1" />
+        </div>
+        <div class="ctrl row">
+          <button type="button" class="btn primary" id="play">▶ Animar ondas</button>
+          <button type="button" class="btn" id="sweep">▶ Animar fase</button>
+        </div>
+        <label class="check"><input type="checkbox" id="showParts" checked /> Mostrar y₁ e y₂</label>
+      </div>
+
+      <div class="readout" id="indicator" aria-live="polite">
+        <p class="status" id="status">Interferência construtiva total</p>
+        <dl>
+          <dt>Amplitude resultante</dt><dd id="ampOut">2,00 A</dd>
+          <dt>Intensidade relativa</dt><dd id="intOut">100 %</dd>
+          <dt>Fórmula</dt><dd id="formulaOut">A<sub>R</sub> = 2A·|cos(Δφ/2)|</dd>
+        </dl>
+        <div class="swatch"><span>destrutiva</span><span class="bar"></span><span>construtiva</span></div>
+      </div>
+
+      <div class="card">
+        <h2>Fasores</h2>
+        <div class="row" style="flex-wrap:nowrap; align-items:center;">
+          <div class="cv square"><canvas id="phasor" aria-label="Diagrama de fasores"></canvas></div>
+          <p class="note">Cada onda é um vetor girante. O resultante (vermelho) tem módulo A<sub>R</sub> = √(A² + A₂² + 2AA₂ cos Δφ); com A₂ = A isso vira 2A|cos(Δφ/2)|.</p>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="../../catalog.js"></script>
+  <script src="../../assets/sim.js"></script>
+  <script>
+  (function () {
+    const { fmt, size, watch, MONO } = Sim;
+    const A1 = 1, kw = 1, omega = 2.2, XMAX = 4 * Math.PI, YMAX = 2.25, SWEEP_DEG_PER_S = 30;
+    const C1 = '#2a6fbf', C2 = '#2f9c5c', CS = '#c6302a';
+    const state = { deg: 0, a2: 1, t: 0, playing: false, sweeping: false, showParts: true };
+    const $ = id => document.getElementById(id);
+    const plot = $('plot'), ph = $('phasor');
+
+    const dphi = () => state.deg * Math.PI / 180;
+    const resultantAmp = () => Math.sqrt(A1 * A1 + state.a2 * state.a2 + 2 * A1 * state.a2 * Math.cos(dphi()));
+    const ratio = () => { const m = A1 + state.a2; return m > 0 ? resultantAmp() / m : 0; };   // 0 destrutiva, 1 construtiva
+    const mixColor = r => `rgb(255,${Math.round(255 - 79 * r)},${Math.round(255 - 87 * r)})`;  // branco -> vermelho-claro
+    function radLabel(deg) {
+      if (deg === 0) return '0 rad'; if (deg === 90) return 'π/2 rad'; if (deg === 180) return 'π rad';
+      if (deg === 270) return '3π/2 rad'; if (deg === 360) return '2π rad';
+      return fmt(deg / 180, 2) + 'π rad';
+    }
+
+    function drawPlot() {
+      const s = size(plot); if (!s) return;
+      const { w: W, h: H, k, ctx: c } = s;
+      const ml = 50 * k, mr = 14 * k, mt = 12 * k, mb = 30 * k, pw = W - ml - mr, phh = H - mt - mb;
+      const xs = x => ml + x / XMAX * pw, ys = y => mt + phh / 2 - y / YMAX * phh / 2;
+      const r = ratio();
+      c.clearRect(0, 0, W, H); c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+
+      // grade e rótulos
+      c.strokeStyle = 'rgba(60,50,45,0.14)'; c.lineWidth = 1;
+      c.font = `${13 * k}px ${MONO}`; c.fillStyle = '#4a4540';
+      for (let y = -2; y <= 2; y++) {
+        c.beginPath(); c.moveTo(ml, ys(y)); c.lineTo(ml + pw, ys(y)); c.stroke();
+        c.textAlign = 'right'; c.textBaseline = 'middle';
+        c.fillText(y === 0 ? '0' : (y > 0 ? '+' : '') + y + 'A', ml - 7 * k, ys(y));
+      }
+      const xt = ['0', 'π', '2π', '3π', '4π'];
+      for (let i = 0; i <= 4; i++) {
+        const x = i * Math.PI;
+        c.beginPath(); c.moveTo(xs(x), mt); c.lineTo(xs(x), mt + phh); c.stroke();
+        c.textAlign = i === 0 ? 'left' : (i === 4 ? 'right' : 'center'); c.textBaseline = 'top';
+        c.fillText(xt[i], xs(x), mt + phh + 7 * k);
+      }
+      c.strokeStyle = 'rgba(60,50,45,0.5)'; c.beginPath(); c.moveTo(ml, ys(0)); c.lineTo(ml + pw, ys(0)); c.stroke();
+
+      const N = Math.max(300, Math.floor(pw)), d = dphi(), t = state.t;
+      const y1 = x => A1 * Math.sin(kw * x - omega * t);
+      const y2 = x => state.a2 * Math.sin(kw * x - omega * t + d);
+
+      // área entre a soma e o eixo: branca (destrutiva) -> vermelho-claro (construtiva)
+      c.beginPath(); c.moveTo(xs(0), ys(0));
+      for (let i = 0; i <= N; i++) { const x = i / N * XMAX; c.lineTo(xs(x), ys(y1(x) + y2(x))); }
+      c.lineTo(xs(XMAX), ys(0)); c.closePath(); c.fillStyle = mixColor(r); c.fill();
+
+      const curve = (fn, color, width, dash) => {
+        c.save(); c.beginPath(); c.setLineDash(dash || []); c.lineWidth = width; c.strokeStyle = color; c.lineJoin = 'round';
+        for (let i = 0; i <= N; i++) { const x = i / N * XMAX, px = xs(x), py = ys(fn(x)); i ? c.lineTo(px, py) : c.moveTo(px, py); }
+        c.stroke(); c.restore();
+      };
+      if (state.showParts) { curve(y1, C1, 2 * k, [8 * k, 6 * k]); curve(y2, C2, 2 * k, [8 * k, 6 * k]); }
+      curve(x => y1(x) + y2(x), CS, 3.4 * k);
+      c.strokeStyle = 'rgba(60,50,45,0.35)'; c.lineWidth = 1; c.strokeRect(ml + 0.5, mt + 0.5, pw - 1, phh - 1);
+    }
+
+    function drawPhasor() {
+      const s = size(ph); if (!s) return;
+      const { w: W, h: H, k, ctx: c } = s;
+      c.clearRect(0, 0, W, H);
+      const cx = W / 2, cy = H / 2, R = Math.min(W, H) * 0.215;   // 1 A = R; raio máximo 2A
+      const d = dphi(), th = -omega * state.t, ink = '#5a6a7a';
+      c.strokeStyle = ink; c.lineWidth = 1; c.globalAlpha = 0.5;
+      c.beginPath(); c.arc(cx, cy, 2 * R, 0, 2 * Math.PI); c.stroke();
+      c.beginPath(); c.arc(cx, cy, R, 0, 2 * Math.PI); c.stroke();
+      c.beginPath(); c.moveTo(cx - 2 * R - 4, cy); c.lineTo(cx + 2 * R + 4, cy); c.moveTo(cx, cy - 2 * R - 4); c.lineTo(cx, cy + 2 * R + 4); c.stroke();
+      c.globalAlpha = 1;
+      const v1 = [A1 * R * Math.cos(th), -A1 * R * Math.sin(th)];
+      const v2 = [state.a2 * R * Math.cos(th + d), -state.a2 * R * Math.sin(th + d)];
+      const vr = [v1[0] + v2[0], v1[1] + v2[1]];
+      const arrow = (vx, vy, color, w) => {
+        const x1 = cx + vx, y1 = cy + vy, L = Math.hypot(vx, vy);
+        c.save(); c.strokeStyle = color; c.fillStyle = color; c.lineWidth = w;
+        c.beginPath(); c.moveTo(cx, cy); c.lineTo(x1, y1); c.stroke();
+        if (L > 4) { const a = Math.atan2(vy, vx), sz = 7 * k;
+          c.beginPath(); c.moveTo(x1, y1); c.lineTo(x1 - sz * Math.cos(a - 0.45), y1 - sz * Math.sin(a - 0.45));
+          c.lineTo(x1 - sz * Math.cos(a + 0.45), y1 - sz * Math.sin(a + 0.45)); c.closePath(); c.fill(); }
+        c.restore();
+      };
+      c.save(); c.setLineDash([3, 3]); c.strokeStyle = ink; c.globalAlpha = 0.6;
+      c.beginPath(); c.moveTo(cx + v1[0], cy + v1[1]); c.lineTo(cx + vr[0], cy + vr[1]); c.lineTo(cx + v2[0], cy + v2[1]); c.stroke(); c.restore();
+      arrow(v1[0], v1[1], C1, 2 * k); arrow(v2[0], v2[1], C2, 2 * k); arrow(vr[0], vr[1], CS, 3 * k);
+    }
+
+    function updateIndicator() {
+      const r = ratio(), AR = resultantAmp(), deg = Math.round(state.deg);
+      const equal = Math.abs(state.a2 - A1) < 1e-9;
+      let status;
+      if (deg === 0 || deg === 360) status = 'Interferência construtiva total';
+      else if (deg === 180 && equal) status = 'Interferência destrutiva total';
+      else if (deg === 180) status = 'Interferência destrutiva (parcial: A₂ ≠ A)';
+      else if (r > 0.95) status = 'Quase construtiva';
+      else if (r < 0.15) status = 'Quase destrutiva';
+      else status = 'Interferência parcial';
+      $('status').textContent = status;
+      $('ampOut').textContent = fmt(AR, 2) + ' A';
+      $('intOut').textContent = fmt(100 * r * r, 0) + ' %';
+      $('formulaOut').innerHTML = equal ? 'A<sub>R</sub> = 2A·|cos(Δφ/2)|' : 'A<sub>R</sub> = √(A² + A₂² + 2AA₂ cos Δφ)';
+      $('indicator').style.background = mixColor(r);
+      $('phaseOut').textContent = deg + '° = ' + radLabel(deg);
+      $('amp2Out').textContent = fmt(state.a2, 2);
+      document.querySelectorAll('#presets button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.deg === deg)));
+    }
+    const render = () => { drawPlot(); drawPhasor(); };
+    const update = () => { updateIndicator(); render(); };
+
+    $('phase').addEventListener('input', e => { state.deg = +e.target.value; update(); });
+    $('amp2').addEventListener('input', e => { state.a2 = +e.target.value; update(); });
+    $('showParts').addEventListener('change', e => { state.showParts = e.target.checked; render(); });
+    $('presets').addEventListener('click', e => {
+      const b = e.target.closest('button[data-deg]'); if (!b) return;
+      state.deg = +b.dataset.deg; $('phase').value = state.deg; update();
+    });
+    let last = null, running = false;
+    function loop(ts) {
+      if (!state.playing && !state.sweeping) { running = false; return; }
+      const dt = last != null ? Math.min(0.05, (ts - last) / 1000) : 0; last = ts;
+      if (state.playing) state.t += dt;
+      if (state.sweeping) { state.deg = (state.deg + SWEEP_DEG_PER_S * dt) % 360; $('phase').value = Math.round(state.deg); update(); }
+      else render();
+      requestAnimationFrame(loop);
+    }
+    const startLoop = () => { if (!running) { running = true; last = null; requestAnimationFrame(loop); } };
+    $('play').addEventListener('click', () => {
+      state.playing = !state.playing; $('play').textContent = state.playing ? '❚❚ Pausar ondas' : '▶ Animar ondas';
+      if (state.playing) startLoop();
+    });
+    $('sweep').addEventListener('click', () => {
+      state.sweeping = !state.sweeping; $('sweep').textContent = state.sweeping ? '❚❚ Parar fase' : '▶ Animar fase';
+      if (state.sweeping) startLoop();
+    });
+
+    state.deg = +$('phase').value; state.a2 = +$('amp2').value; state.showParts = $('showParts').checked;
+    watch(render); update();
+  })();
+  </script>
+</body>
+</html>

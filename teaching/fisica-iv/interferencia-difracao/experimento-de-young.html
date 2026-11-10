@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Experimento de Young · Física IV · Prof. Alexandre Bonatto</title>
+  <meta name="description" content="Simulação do experimento de Young: diferença de caminho ΔL = d·senθ e posição das franjas de interferência." />
+  <link rel="stylesheet" href="../../assets/sim.css" />
+</head>
+<body data-course="fisica-iv" data-topic="interferencia-difracao" data-sim="experimento-de-young">
+
+  <main class="stage three">
+    <h1 class="sr-only">Experimento de Young: posição das franjas</h1>
+
+    <section class="view">
+      <div class="sheet grow">
+        <div class="cv tall"><canvas id="geo" aria-label="Fendas, raios até P e franjas na tela"></canvas></div>
+        <p class="note">Desenho fora de escala: d é da ordem de micrômetros e D de metros, por isso r₁ e r₂ são praticamente paralelos. Franjas para fendas estreitas: I = I<sub>máx</sub>·cos²(π d senθ/λ).</p>
+      </div>
+    </section>
+
+    <section class="col">
+      <div class="sheet grow">
+        <h2>Raios paralelos (D ≫ d)</h2>
+        <div class="cv"><canvas id="zoom" aria-label="Triângulo com d, θ e ΔL"></canvas></div>
+        <div class="eqs">
+          <span>Δ<span class="v">L</span> = <span class="v">d</span> sen <span class="v">θ</span></span>
+          <small>máximos: d·senθ = mλ &nbsp;·&nbsp; mínimos: d·senθ = (m + ½)λ</small>
+        </div>
+      </div>
+      <div class="sheet grow">
+        <h2>Ondas que chegam em P</h2>
+        <div class="cv wide"><canvas id="waves" aria-label="Ondas de S1 e S2 em P e sua soma"></canvas></div>
+        <p class="note">r₁ e r₂ chegam defasadas de δ = 2πΔL/λ; a soma tem amplitude 2A|cos(δ/2)|.</p>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="card">
+        <h2>Controles</h2>
+        <div class="ctrl">
+          <label for="theta"><span>Ângulo θ</span><output id="thetaOut" for="theta">0,0°</output></label>
+          <input type="range" id="theta" min="-30" max="30" step="0.1" value="0" />
+          <div class="presets" id="maxBtns"><span class="lbl">máximos m =</span></div>
+          <div class="presets" id="minBtns"><span class="lbl">mínimos m =</span></div>
+        </div>
+        <div class="ctrl">
+          <label for="d"><span>Distância entre as fendas, d</span><output id="dOut" for="d">3,0 µm</output></label>
+          <input type="range" id="d" min="0.5" max="20" step="0.1" value="3" />
+        </div>
+        <div class="ctrl">
+          <label for="lambda"><span>Comprimento de onda, λ</span><output id="lambdaOut" for="lambda">633 nm</output></label>
+          <input type="range" id="lambda" min="380" max="750" step="1" value="633" />
+        </div>
+        <div class="ctrl">
+          <label for="D"><span>Distância até a tela, D</span><output id="DOut" for="D">1,0 m</output></label>
+          <input type="range" id="D" min="0.1" max="5" step="0.1" value="1" />
+        </div>
+        <div class="ctrl row">
+          <button type="button" class="btn primary" id="play">▶ Varrer θ</button>
+          <button type="button" class="btn" id="playWaves">▶ Animar ondas em P</button>
+        </div>
+      </div>
+
+      <div class="readout" id="readout" aria-live="polite">
+        <p class="status" id="status">Máximo central (m = 0)</p>
+        <dl>
+          <dt>ΔL = d·senθ</dt><dd id="dLOut">0,000 µm</dd>
+          <dt>ΔL / λ</dt><dd id="ratioOut">0,00</dd>
+          <dt>Defasagem δ = 2πΔL/λ</dt><dd id="deltaOut">0,00π rad</dd>
+          <dt>I / I<sub>máx</sub> = cos²(δ/2)</dt><dd id="intOut">1,00</dd>
+          <dt>Posição y = D·tgθ</dt><dd id="yOut">0,0 mm</dd>
+        </dl>
+      </div>
+
+      <p class="note">Na tela, y = D·tgθ; para ângulos pequenos as franjas claras ficam em y ≈ mλD/d.</p>
+    </aside>
+  </main>
+
+  <script src="../../catalog.js"></script>
+  <script src="../../assets/sim.js"></script>
+  <script>
+  (function () {
+    const { fmt, size, watch, line, arrowHead, label, wlToRGB } = Sim;
+    // unidades: d em µm, λ em nm, D em m, θ em graus
+    const state = { theta: 0, d: 3, lambda: 633, D: 1, playing: false, dir: 1, wavesOn: false, t: 0 };
+    const SWEEP = 6, DEG = Math.PI / 180, TMAX = 30;
+    const RAY = '#d9262c', RAYT = '#b71f25', GREEN = '#1f8f5f', INK = '#1e1c19', GREY = '#6c675e';
+    const $ = id => document.getElementById(id);
+    const geo = $('geo'), zoom = $('zoom'), wv = $('waves');
+    const lamUm = () => state.lambda / 1000;
+    const dL = () => state.d * Math.sin(state.theta * DEG);      // µm
+    const q = () => dL() / lamUm();                              // ΔL/λ
+    const intensity = () => { const c = Math.cos(Math.PI * q()); return c * c; };
+
+    let col = [255, 0, 0];
+    const mixWhite = (v, w) => Math.round(255 + (v - 255) * w);
+    const tint = w => `rgb(${mixWhite(col[0], w)},${mixWhite(col[1], w)},${mixWhite(col[2], w)})`;
+    const dark = w => `rgb(${Math.round(col[0] * w)},${Math.round(col[1] * w)},${Math.round(col[2] * w)})`;
+
+    // pé da perpendicular do ponto "near" sobre a reta que sai de "far" na direção (dx,dy)
+    function footOf(near, far, dx, dy) {
+      const L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, t = (near[0] - far[0]) * ux + (near[1] - far[1]) * uy;
+      return [far[0] + t * ux, far[1] + t * uy];
+    }
+    function classify() {
+      const r = q(), m = Math.round(r), mh = Math.floor(r) + 0.5;
+      if (Math.abs(r - m) < 0.03) return { kind: 'max', m };
+      if (Math.abs(r - mh) < 0.03) return { kind: 'min', m: Math.floor(r) };
+      return { kind: 'mid' };
+    }
+
+    function drawGeo() {
+      const s = size(geo); if (!s) return;
+      const { w: W, h: H, k, ctx: c } = s;
+      c.clearRect(0, 0, W, H); c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+      const cy = H / 2, sw = 18 * k, labelSpace = 150 * k;
+      const xb = Math.max(0.12 * W, 100 * k);
+      const Dpx = Math.max(60, Math.min(0.80 * H, W - xb - sw - labelSpace));
+      const xs = xb + Dpx;
+      const dpx = H * (0.08 + 0.24 * (state.d - 0.5) / 19.5);
+      const S2 = [xb, cy - dpx / 2], S1 = [xb, cy + dpx / 2];
+      const th = state.theta * DEG, yP = cy - Dpx * Math.tan(th), P = [xs, yP];
+
+      // onda plana incidente
+      for (let i = 0; i < 5; i++) { const x = xb - 76 * k + i * 13 * k; line(c, x, cy - dpx * 0.9 - 26 * k, x, cy + dpx * 0.9 + 26 * k, '#d9534f', 1.7 * k); }
+      line(c, xb - 86 * k, cy, xb - 20 * k, cy, INK, 1.3 * k); arrowHead(c, xb - 17 * k, cy, 0, 9 * k, INK);
+
+      // franjas na tela: I(y) = cos²(π d senθ(y)/λ)
+      const lam = lamUm();
+      for (let y = 0; y < H; y++) {
+        const t = Math.atan((cy - y) / Dpx), cc = Math.cos(Math.PI * state.d * Math.sin(t) / lam);
+        c.fillStyle = tint(cc * cc); c.fillRect(xs, y, sw, 1);
+      }
+      c.strokeStyle = INK; c.lineWidth = 1; c.strokeRect(xs + 0.5, 0.5, sw - 1, H - 1);
+      label(c, 'C', xs + sw / 2, H - 12 * k, { align: 'center', italic: true, size: 15 * k });
+      label(c, 'tela', xs + sw + 7 * k, H - 12 * k, { color: GREY, size: 13 * k });
+
+      // anteparo com as duas fendas
+      const bw = 10 * k, gap = 8 * k;
+      c.fillStyle = '#1f5f6b';
+      c.fillRect(xb - bw / 2, 0, bw, S2[1] - gap / 2);
+      c.fillRect(xb - bw / 2, S2[1] + gap / 2, bw, S1[1] - S2[1] - gap);
+      c.fillRect(xb - bw / 2, S1[1] + gap / 2, bw, H - S1[1] - gap / 2);
+      label(c, 'B', xb - bw / 2 - 6 * k, H - 12 * k, { align: 'right', italic: true, size: 15 * k });
+      label(c, 'S₂', xb - 13 * k, S2[1] - 11 * k, { align: 'right', italic: true, size: 16 * k });
+      label(c, 'S₁', xb - 13 * k, S1[1] + 12 * k, { align: 'right', italic: true, size: 16 * k });
+      // cota d
+      const xd = xb + 24 * k;
+      line(c, xd, S2[1], xd, S1[1], INK, 1); arrowHead(c, xd, S2[1], -Math.PI / 2, 7 * k, INK); arrowHead(c, xd, S1[1], Math.PI / 2, 7 * k, INK);
+      label(c, 'd', xd + 7 * k, cy - 9 * k, { italic: true, size: 16 * k });
+      // cota D no topo
+      const yD = 16 * k;
+      line(c, xb, yD, xs, yD, INK, 1); arrowHead(c, xb + 1, yD, Math.PI, 7 * k, INK); arrowHead(c, xs - 1, yD, 0, 7 * k, INK);
+      c.fillStyle = '#fff'; c.fillRect((xb + xs) / 2 - 78 * k, yD - 9 * k, 156 * k, 18 * k);
+      label(c, 'D  (≫ d, fora de escala)', (xb + xs) / 2, yD, { align: 'center', size: 13 * k, color: GREY });
+
+      // eixo central tracejado e arco de θ
+      line(c, xb, cy, xs, cy, GREY, 1, [6 * k, 5 * k]);
+      const arcR = Math.min(80 * k, Dpx * 0.3);
+      c.save(); c.strokeStyle = INK; c.lineWidth = 1.3 * k; c.beginPath();
+      if (th >= 0) c.arc(xb, cy, arcR, -th, 0); else c.arc(xb, cy, arcR, 0, -th); c.stroke(); c.restore();
+      if (Math.abs(th) > 1.5 * DEG) label(c, 'θ', xb + arcR + 9 * k, cy - Math.sin(th / 2) * (arcR + 4 * k), { italic: true, size: 17 * k });
+
+      // raios r1 (de S1) e r2 (de S2) até P
+      line(c, S1[0], S1[1], P[0], P[1], RAY, 2.2 * k); line(c, S2[0], S2[1], P[0], P[1], RAY, 2.2 * k);
+      const a1 = Math.atan2(P[1] - S1[1], P[0] - S1[0]), a2 = Math.atan2(P[1] - S2[1], P[0] - S2[0]);
+      arrowHead(c, S1[0] + (P[0] - S1[0]) * 0.62, S1[1] + (P[1] - S1[1]) * 0.62, a1, 10 * k, RAY);
+      arrowHead(c, S2[0] + (P[0] - S2[0]) * 0.62, S2[1] + (P[1] - S2[1]) * 0.62, a2, 10 * k, RAY);
+      label(c, 'r₁', S1[0] + (P[0] - S1[0]) * 0.5, S1[1] + (P[1] - S1[1]) * 0.5 + 16 * k, { italic: true, size: 16 * k, color: RAYT });
+      label(c, 'r₂', S2[0] + (P[0] - S2[0]) * 0.5, S2[1] + (P[1] - S2[1]) * 0.5 - 16 * k, { italic: true, size: 16 * k, color: RAYT });
+
+      // ΔL: perpendicular da fenda mais próxima de P sobre o raio da fenda mais distante
+      if (Math.abs(th) > 0.3 * DEG) {
+        const near = th >= 0 ? S2 : S1, far = th >= 0 ? S1 : S2;
+        const b = footOf(near, far, P[0] - far[0], P[1] - far[1]);
+        line(c, near[0], near[1], b[0], b[1], GREY, 1, [3 * k, 3 * k]);
+        line(c, far[0], far[1], b[0], b[1], GREEN, 5 * k);
+        const L = Math.hypot(P[0] - far[0], P[1] - far[1]), ux = (P[0] - far[0]) / L, uy = (P[1] - far[1]) / L;
+        const sz = 8 * k, nx = th >= 0 ? -uy : uy, ny = th >= 0 ? ux : -ux;
+        c.save(); c.strokeStyle = GREY; c.lineWidth = 1; c.beginPath();
+        c.moveTo(b[0] - ux * sz, b[1] - uy * sz); c.lineTo(b[0] - ux * sz + nx * sz, b[1] - uy * sz + ny * sz); c.lineTo(b[0] + nx * sz, b[1] + ny * sz); c.stroke(); c.restore();
+        label(c, 'b', b[0] + 9 * k, b[1] + (th >= 0 ? -10 : 12) * k, { italic: true, size: 15 * k });
+        label(c, 'ΔL', (far[0] + b[0]) / 2 + 7 * k, (far[1] + b[1]) / 2 + (th >= 0 ? 22 : -22) * k, { italic: true, size: 16 * k, color: GREEN, align: 'center' });
+      }
+
+      // ponto P e tipo de franja
+      c.fillStyle = INK; c.beginPath(); c.arc(P[0] + sw / 2, P[1], 4.5 * k, 0, 2 * Math.PI); c.fill();
+      line(c, P[0] - 7 * k, P[1], P[0] + sw + 7 * k, P[1], INK, 1.3 * k);
+      label(c, 'P', P[0] + sw + 11 * k, P[1] - 11 * k, { italic: true, size: 17 * k });
+      const kd = classify();
+      const txt = kd.kind === 'max' ? `máximo, m = ${kd.m}` : kd.kind === 'min' ? `mínimo, ΔL = ${fmt(kd.m + 0.5, 1)}λ` : `I/Imáx = ${fmt(intensity(), 2)}`;
+      label(c, txt, P[0] + sw + 11 * k, P[1] + 10 * k, { size: 13.5 * k, color: kd.kind === 'max' ? dark(0.75) : kd.kind === 'min' ? INK : GREY });
+      // cota y, na margem direita
+      if (Math.abs(yP - cy) > 14 * k) {
+        const xy = Math.min(W - 16 * k, xs + sw + labelSpace - 18 * k);
+        line(c, xy, cy, xy, yP, GREY, 1); arrowHead(c, xy, yP, yP < cy ? -Math.PI / 2 : Math.PI / 2, 7 * k, GREY);
+        line(c, xs + sw, cy, xy + 5 * k, cy, GREY, 1, [2 * k, 3 * k]);
+        label(c, 'y', xy - 12 * k, (cy + yP) / 2 + (yP < cy ? 14 : -14) * k, { italic: true, size: 16 * k, color: GREY });
+      }
+    }
+
+    function drawZoom() {
+      const s = size(zoom); if (!s) return;
+      const { w: W, h: H, k, ctx: c } = s;
+      c.clearRect(0, 0, W, H); c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+      const th = state.theta * DEG, dpx = Math.min(H * 0.5, W * 0.34), x0 = W * 0.26, cy = H / 2;
+      const S2 = [x0, cy - dpx / 2], S1 = [x0, cy + dpx / 2];
+      const ux = Math.cos(th), uy = -Math.sin(th), L = W * 0.62;
+      line(c, S1[0], S1[1], S1[0] + ux * L, S1[1] + uy * L, RAY, 2.2 * k); line(c, S2[0], S2[1], S2[0] + ux * L, S2[1] + uy * L, RAY, 2.2 * k);
+      arrowHead(c, S1[0] + ux * L, S1[1] + uy * L, -th, 10 * k, RAY); arrowHead(c, S2[0] + ux * L, S2[1] + uy * L, -th, 10 * k, RAY);
+      label(c, 'r₁', S1[0] + ux * L * 0.82, S1[1] + uy * L * 0.82 + 15 * k, { italic: true, size: 15 * k, color: RAYT });
+      label(c, 'r₂', S2[0] + ux * L * 0.82, S2[1] + uy * L * 0.82 - 15 * k, { italic: true, size: 15 * k, color: RAYT });
+      line(c, S1[0], S1[1], S1[0] + 70 * k, S1[1], GREY, 1, [4 * k, 4 * k]); line(c, S2[0], S2[1], S2[0] + 70 * k, S2[1], GREY, 1, [4 * k, 4 * k]);
+      line(c, S1[0], S1[1], S2[0], S2[1], INK, 1.4 * k);
+      c.fillStyle = INK; [S1, S2].forEach(p => { c.beginPath(); c.arc(p[0], p[1], 3.5 * k, 0, 2 * Math.PI); c.fill(); });
+      label(c, 'S₂', S2[0] - 9 * k, S2[1], { align: 'right', italic: true, size: 15 * k });
+      label(c, 'S₁', S1[0] - 9 * k, S1[1], { align: 'right', italic: true, size: 15 * k });
+      label(c, 'd', S1[0] - 11 * k, cy, { align: 'right', italic: true, size: 16 * k });
+      c.save(); c.strokeStyle = INK; c.lineWidth = 1;
+      [S1, S2].forEach(p => { c.beginPath(); if (th >= 0) c.arc(p[0], p[1], 26 * k, -th, 0); else c.arc(p[0], p[1], 26 * k, 0, -th); c.stroke(); });
+      c.restore();
+      if (Math.abs(th) > 2 * DEG) label(c, 'θ', S1[0] + 34 * k, S1[1] - Math.sin(th / 2) * 30 * k, { italic: true, size: 15 * k });
+      if (Math.abs(th) > 0.3 * DEG) {
+        const near = th >= 0 ? S2 : S1, far = th >= 0 ? S1 : S2, b = footOf(near, far, ux, uy);
+        line(c, near[0], near[1], b[0], b[1], GREY, 1, [3 * k, 3 * k]);
+        line(c, far[0], far[1], b[0], b[1], GREEN, 4.5 * k);
+        const sz = 7 * k, nx = th >= 0 ? -uy : uy, ny = th >= 0 ? ux : -ux;
+        c.save(); c.strokeStyle = GREY; c.lineWidth = 1; c.beginPath();
+        c.moveTo(b[0] - ux * sz, b[1] - uy * sz); c.lineTo(b[0] - ux * sz + nx * sz, b[1] - uy * sz + ny * sz); c.lineTo(b[0] + nx * sz, b[1] + ny * sz); c.stroke(); c.restore();
+        label(c, 'ΔL = d senθ', (far[0] + b[0]) / 2 + 5 * k, (far[1] + b[1]) / 2 + (th >= 0 ? 19 : -19) * k, { italic: true, size: 15 * k, color: GREEN });
+      } else label(c, 'θ = 0:  ΔL = 0', W * 0.62, cy, { size: 14 * k, color: GREY, align: 'center' });
+    }
+
+    function drawWaves() {
+      const s = size(wv); if (!s) return;
+      const { w: W, h: H, k, ctx: c } = s;
+      c.clearRect(0, 0, W, H); c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+      const ml = 8 * k, top = 24 * k, cy = top + (H - top) / 2, amp = (H - top) * 0.22, X = 4 * Math.PI, delta = 2 * Math.PI * q(), t = state.t;
+      const xs = x => ml + x / X * (W - 2 * ml), ys = y => cy - y * amp;
+      line(c, ml, cy, W - ml, cy, GREY, 1);
+      const curve = (fn, color, wd, dash) => { c.save(); c.strokeStyle = color; c.lineWidth = wd; c.setLineDash(dash || []); c.lineJoin = 'round'; c.beginPath();
+        for (let i = 0; i <= 400; i++) { const x = i / 400 * X, px = xs(x), py = ys(fn(x)); i ? c.lineTo(px, py) : c.moveTo(px, py); } c.stroke(); c.restore(); };
+      curve(x => Math.sin(x - t), '#2a6fbf', 1.8 * k, [7 * k, 5 * k]);
+      curve(x => Math.sin(x - t + delta), '#2f9c5c', 1.8 * k, [7 * k, 5 * k]);
+      curve(x => Math.sin(x - t) + Math.sin(x - t + delta), dark(0.8), 3 * k);
+      const fs = 13 * k;
+      label(c, 'r₁', ml + 4 * k, 6 * k, { size: fs, color: '#2a6fbf', mono: true, base: 'top' });
+      label(c, 'r₂', ml + 34 * k, 6 * k, { size: fs, color: '#2f9c5c', mono: true, base: 'top' });
+      label(c, 'soma', ml + 64 * k, 6 * k, { size: fs, color: dark(0.8), mono: true, base: 'top' });
+      label(c, 'δ = ' + fmt(delta / Math.PI, 2) + 'π', W - ml - 4 * k, 6 * k, { size: fs, color: GREY, mono: true, base: 'top', align: 'right' });
+    }
+
+    function updateText() {
+      const r = q(), kd = classify(), I = intensity();
+      $('status').textContent = kd.kind === 'max'
+        ? (kd.m === 0 ? 'Máximo central (m = 0): construtiva total' : `Máximo de ordem m = ${kd.m}: construtiva total`)
+        : kd.kind === 'min' ? `Mínimo (ΔL = ${fmt(kd.m + 0.5, 1)}λ): destrutiva total` : 'Interferência parcial';
+      $('dLOut').textContent = fmt(dL(), 3) + ' µm';
+      $('ratioOut').textContent = fmt(r, 2);
+      $('deltaOut').textContent = fmt(2 * r, 2) + 'π rad';
+      $('intOut').textContent = fmt(I, 2);
+      $('yOut').textContent = fmt(state.D * Math.tan(state.theta * DEG) * 1000, 1) + ' mm';
+      $('readout').style.background = tint(0.5 * I);
+      $('thetaOut').textContent = fmt(state.theta, 1) + '°';
+      $('dOut').textContent = fmt(state.d, 1) + ' µm';
+      $('lambdaOut').textContent = state.lambda + ' nm';
+      $('DOut').textContent = fmt(state.D, 1) + ' m';
+      // botões dos máximos e mínimos alcançáveis dentro de ±30°
+      const lam = lamUm(), smax = Math.sin(TMAX * DEG);
+      const build = (box, half) => {
+        box.querySelectorAll('button').forEach(b => b.remove());
+        for (let m = 0; m < 8; m++) {
+          const sn = (m + (half ? 0.5 : 0)) * lam / state.d; if (sn > smax) break;
+          const b = document.createElement('button'); b.type = 'button';
+          b.textContent = half ? (m === 0 ? '½' : `${2 * m + 1}⁄2`) : String(m);
+          const thm = Math.asin(sn) / DEG; b.dataset.theta = thm.toFixed(1);
+          b.setAttribute('aria-pressed', String(Math.abs(Math.abs(state.theta) - thm) < 0.06));
+          box.appendChild(b);
+        }
+      };
+      build($('maxBtns'), false); build($('minBtns'), true);
+    }
+    const render = () => { drawGeo(); drawZoom(); drawWaves(); };
+    const update = () => { updateText(); render(); };
+
+    const setLambda = v => { state.lambda = v; col = wlToRGB(v); };
+    $('theta').addEventListener('input', e => { state.theta = +e.target.value; update(); });
+    $('d').addEventListener('input', e => { state.d = +e.target.value; update(); });
+    $('lambda').addEventListener('input', e => { setLambda(+e.target.value); update(); });
+    $('D').addEventListener('input', e => { state.D = +e.target.value; update(); });
+    const snap = e => { const b = e.target.closest('button[data-theta]'); if (!b) return;
+      state.theta = (state.theta < 0 ? -1 : 1) * (+b.dataset.theta); $('theta').value = state.theta; update(); };
+    $('maxBtns').addEventListener('click', snap); $('minBtns').addEventListener('click', snap);
+
+    let last = null, running = false;
+    function loop(ts) {
+      if (!state.playing && !state.wavesOn) { running = false; return; }
+      const dt = last != null ? Math.min(0.05, (ts - last) / 1000) : 0; last = ts;
+      if (state.wavesOn) state.t += 2.5 * dt;
+      if (state.playing) {
+        let v = state.theta + state.dir * SWEEP * dt;
+        if (v >= TMAX) { v = TMAX; state.dir = -1; } else if (v <= -TMAX) { v = -TMAX; state.dir = 1; }
+        state.theta = Math.round(v * 10) / 10; $('theta').value = state.theta; update();
+      } else drawWaves();
+      requestAnimationFrame(loop);
+    }
+    const start = () => { if (!running) { running = true; last = null; requestAnimationFrame(loop); } };
+    $('play').addEventListener('click', () => { state.playing = !state.playing; $('play').textContent = state.playing ? '❚❚ Pausar θ' : '▶ Varrer θ'; if (state.playing) start(); });
+    $('playWaves').addEventListener('click', () => { state.wavesOn = !state.wavesOn; $('playWaves').textContent = state.wavesOn ? '❚❚ Parar ondas' : '▶ Animar ondas em P'; if (state.wavesOn) start(); });
+
+    setLambda(state.lambda); watch(render); update();
+  })();
+  </script>
+</body>
+</html>
