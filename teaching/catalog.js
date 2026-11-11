@@ -24,7 +24,11 @@ window.TEACHING = {
           name: 'Redes de Difração',
           sims: [
             { slug: 'fendas-multiplas',     name: 'Fendas múltiplas: intensidade e fasores',
-              desc: 'Como o número N de fendas estreita os máximos principais, com a soma dos N fasores para cada ângulo θ.' }
+              desc: 'Como o número N de fendas estreita os máximos principais, com a soma dos N fasores para cada ângulo θ.' },
+            { slug: 'largura-dos-maximos',  name: 'Largura dos máximos principais',
+              desc: 'Os ângulos δθ₀ e δθ entre um máximo e o primeiro mínimo, e como eles diminuem com a largura N·d da rede.' },
+            { slug: 'dispersao-e-resolucao', name: 'Dispersão e poder de resolução',
+              desc: 'Duas linhas espectrais próximas: a dispersão D = m/(d cos θ) as afasta e R = N·m decide se são resolvidas.' }
           ]
         }
       ]

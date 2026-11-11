@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Largura dos máximos principais · Física IV · Prof. Alexandre Bonatto</title>
+  <meta name="description" content="Simulação da largura angular dos máximos principais de uma rede de difração: sen δθ₀ = λ/Nd e δθ = λ/(N d cos θ)." />
+  <link rel="stylesheet" href="../../assets/sim.css?v=202611111054" />
+  <style>
+    .sheet.geo { flex: 1.3; }
+    .sheet.plots { flex: 1; flex-direction: row; gap: .8rem; }
+    .plotbox { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: .25rem; }
+    #vsN { cursor: crosshair; touch-action: pan-y; }
+    .legend .lcurve { color: var(--sumc, #2f7d32); } .legend .lred { color: var(--hot); }
+    .formulas { display: grid; gap: .45rem; justify-items: start; }
+    .formulas .eq { font-size: 1.2rem; gap: .4rem; }
+    @media (max-width: 900px), (max-height: 460px) { .sheet.plots { flex-direction: column; } .plotbox .cv { aspect-ratio: 16 / 9; } }
+  </style>
+</head>
+<body data-course="fisica-iv" data-topic="redes-de-difracao" data-sim="largura-dos-maximos">
+
+  <main class="stage">
+    <h1 class="sr-only">Largura dos máximos principais</h1>
+
+    <section class="view">
+      <div class="sheet grow geo">
+        <div class="legend">
+          <span class="lcurve" id="legCurve"><i></i> intensidade na tela</span>
+          <span class="lred"><i></i> δθ: do pico ao primeiro mínimo</span>
+          <span>ângulos desenhados em escala; a distância da tela se ajusta para o máximo escolhido caber</span>
+        </div>
+        <div class="cv tall"><canvas id="geo" aria-label="Rede, tela com o perfil de intensidade e os ângulos θ, δθ e δθ₀"></canvas></div>
+      </div>
+
+      <div class="sheet grow plots">
+        <div class="plotbox">
+          <h2 id="zoomTitle">Máximo selecionado, ampliado</h2>
+          <div class="cv"><canvas id="zoom" aria-label="Perfil de intensidade em torno do máximo selecionado"></canvas></div>
+        </div>
+        <div class="plotbox">
+          <h2>Largura δθ em função do número de fendas</h2>
+          <div class="cv"><canvas id="vsN" aria-label="Largura do máximo em função de N"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="card">
+        <h2>Rede e luz</h2>
+        <div class="ctrl">
+          <label for="N"><span>Número de fendas, N</span><output id="NOut" for="N">5</output></label>
+          <input type="range" id="N" min="2" max="50" step="1" value="5" />
+          <div class="presets" id="nBtns" role="group" aria-label="Valores de N">
+            <button type="button" data-n="2">2</button><button type="button" data-n="5">5</button><button type="button" data-n="10">10</button>
+            <button type="button" data-n="20">20</button><button type="button" data-n="50">50</button>
+          </div>
+        </div>
+        <div class="ctrl">
+          <label for="d"><span>Distância entre fendas, d</span><output id="dOut" for="d">3,0 µm</output></label>
+          <input type="range" id="d" min="2" max="10" step="0.1" value="3" />
+        </div>
+        <div class="ctrl">
+          <label for="lambda"><span>Comprimento de onda, λ</span><output id="lambdaOut" for="lambda">550 nm</output></label>
+          <input type="range" id="lambda" min="380" max="750" step="1" value="550" />
+        </div>
+        <div class="ctrl">
+          <div class="presets" id="mBtns" role="group" aria-label="Ordem do máximo"><span class="lbl">máximo de ordem m =</span></div>
+        </div>
+        <div class="ctrl row">
+          <button type="button" class="btn primary" id="animN">▶ Aumentar N</button>
+        </div>
+      </div>
+
+      <div class="readout" id="readout" aria-live="polite">
+        <p class="status" id="status">Máximo principal de ordem m = 1</p>
+        <dl>
+          <dt>Posição do máximo, θ</dt><dd id="thOut">10,56°</dd>
+          <dt>δθ até o 1º mínimo</dt><dd id="dthOut">2,134°</dd>
+          <dt id="apxLbl">λ / (N d cos θ)</dt><dd id="apxOut">2,137°</dd>
+          <dt>Largura da rede, N·d</dt><dd id="ndOut">15,0 µm</dd>
+        </dl>
+      </div>
+
+      <div class="card formulas">
+        <h2>Fórmulas</h2>
+        <div class="eq"><span>sen δ<span class="v">θ</span><sub>0</sub> =</span><span class="frac"><span class="num"><span class="v">λ</span></span><span class="den"><span class="v">N d</span></span></span><span style="font-family:var(--ui);font-size:.8rem;color:var(--muted)">máximo central</span></div>
+        <div class="eq"><span>δ<span class="v">θ</span> =</span><span class="frac"><span class="num"><span class="v">λ</span></span><span class="den"><span class="v">N d</span> cos <span class="v">θ</span></span></span><span style="font-family:var(--ui);font-size:.8rem;color:var(--muted)">máximo em θ</span></div>
+      </div>
+
+      <p class="note">O primeiro mínimo ao lado de um máximo de ordem m ocorre quando d senθ = (m + 1/N)λ, isto é, ΔL muda de λ/N. Os picos ficam mais estreitos quando a largura total da rede, N·d, aumenta.</p>
+    </aside>
+  </main>
+
+  <script src="../../catalog.js?v=202611111054"></script>
+  <script src="../../assets/sim.js?v=202611111054"></script>
+  <script>
+  (function () {
+    const { fmt, size, watch, line, arrowHead, label, wlToRGB, MONO } = Sim;
+    // unidades: d em µm, λ em nm, ângulos em graus
+    const state = { N: 5, d: 3, lambda: 550, m: 1, animN: false, acc: 0, dir: 1 };
+    const DEG = Math.PI / 180, INK = '#1e1c19', GREY = '#5a6a7a', RED = '#c6302a';
+    const $ = id => document.getElementById(id);
+    const cvG = $('geo'), cvZ = $('zoom'), cvN = $('vsN');
+    const lamUm = () => state.lambda / 1000;
+    const asinDeg = x => Math.abs(x) < 1 ? Math.asin(x) / DEG : null;
+    const thetaM = m => asinDeg(m * lamUm() / state.d);                       // posição do máximo de ordem m
+    const firstMin = (m, N = state.N) => asinDeg((m + 1 / N) * lamUm() / state.d);   // primeiro mínimo depois dele
+    const width = (m, N = state.N) => { const a = thetaM(m), b = firstMin(m, N); return a == null || b == null ? null : b - a; };
+    const I = th => {
+      const ph = 2 * Math.PI * state.d * Math.sin(th * DEG) / lamUm(), s = Math.sin(ph / 2);
+      if (Math.abs(s) < 1e-7) return 1; const v = Math.sin(state.N * ph / 2) / (state.N * s); return v * v;
+    };
+    const orderOK = m => { const b = firstMin(m, 2); return b != null && b <= 42; };   // N = 2 é o pior caso: a ordem não some ao variar N
+
+    let col = [0, 255, 0];
+    const mixWhite = (v, w) => Math.round(255 + (v - 255) * w);
+    const tint = w => `rgb(${mixWhite(col[0], w)},${mixWhite(col[1], w)},${mixWhite(col[2], w)})`;
+    const dark = w => `rgb(${Math.round(col[0] * w)},${Math.round(col[1] * w)},${Math.round(col[2] * w)})`;
+    function niceStep(range, target) {
+      const raw = range / target, p = Math.pow(10, Math.floor(Math.log10(raw)));
+      for (const mm of [1, 2, 5, 10]) if (raw <= mm * p) return mm * p;
+      return 10 * p;
+    }
+    const decimals = step => Math.max(0, Math.ceil(-Math.log10(step) - 1e-9));
+    const layout = {};
+
+    // ───────── geometria (como a Fig. 43-5) ─────────
+    function drawGeo() {
+      const s = size(cvG); if (!s) return;
+      const { w: W, h: H, k, ctx: c } = s;
+      c.clearRect(0, 0, W, H); c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+      const m = state.m, thM = thetaM(m), thMin = firstMin(m), dth = thMin - thM, d0 = firstMin(0);
+      const xg = 70 * k, rightSpace = 215 * k, cy = H * (m === 0 ? 0.5 : 0.8);
+      const topAng = Math.min(80, m === 0 ? d0 * 2.2 : thMin + Math.max(dth * 1.2, 1.5));
+      let Dpx = Math.min(W - xg - rightSpace, (cy - 16 * k) / Math.tan(topAng * DEG), (H - cy - 12 * k) / Math.tan(Math.min(60, d0 * 1.25) * DEG));
+      Dpx = Math.max(Dpx, 120);
+      const O = [xg + 6 * k, cy], xs = O[0] + Dpx, yOf = th => cy - Dpx * Math.tan(th * DEG);
+
+      // perfil de intensidade na tela, desenhado "deitado" como na figura do livro
+      const A = Math.min(96 * k, 0.14 * Dpx);
+      c.beginPath(); c.moveTo(xs, 0);
+      for (let y = 0; y <= H; y += 0.5) c.lineTo(xs - A * I(Math.atan((cy - y) / Dpx) / DEG), y);
+      c.lineTo(xs, H); c.closePath(); c.fillStyle = tint(0.6); c.fill(); c.strokeStyle = dark(0.72); c.lineWidth = 1.5 * k; c.stroke();
+      c.fillStyle = '#d9dee6'; c.fillRect(xs, 4 * k, 11 * k, H - 8 * k); c.strokeStyle = GREY; c.lineWidth = 1; c.strokeRect(xs + 0.5, 4 * k + 0.5, 11 * k - 1, H - 8 * k - 1);
+      label(c, 'tela', xs + 5.5 * k, 16 * k, { align: 'center', size: 11.5 * k, color: GREY, mono: true });
+
+      // rede com N fendas
+      const gh = Math.min(0.36 * H, 2 * (H - cy) - 12 * k);
+      c.fillStyle = '#aeb9c4'; c.fillRect(xg - 5 * k, cy - gh / 2, 10 * k, gh);
+      c.fillStyle = '#fff';
+      for (let j = 0; j < state.N; j++) { const y = cy - gh / 2 + gh * (j + 0.5) / state.N, hh = Math.max(1, Math.min(3 * k, gh / state.N * 0.5)); c.fillRect(xg - 5 * k, y - hh / 2, 10 * k, hh); }
+      label(c, `rede: N = ${state.N} fendas`, 8 * k, cy - gh / 2 - 26 * k, { size: 13.5 * k });
+      label(c, `largura N·d = ${fmt(state.N * state.d, 1)} µm`, 8 * k, cy - gh / 2 - 10 * k, { size: 12.5 * k, color: GREY });
+
+      // raios
+      const ray = (th, color, wd) => line(c, O[0], O[1], xs, yOf(th), color, wd);
+      ray(0, INK, 1.3 * k); ray(-d0, INK, 1 * k);
+      if (m > 0) { ray(thM, INK, 1.3 * k); ray(thMin, INK, 1 * k); } else ray(d0, INK, 1 * k);
+      // arcos (ângulos medidos a partir do eixo, positivos para cima)
+      const arc = (r, a0, a1, color, wd) => { c.save(); c.strokeStyle = color; c.lineWidth = wd; c.beginPath(); c.arc(O[0], O[1], r, -a1 * DEG, -a0 * DEG); c.stroke(); c.restore(); };
+      const onRay = (th, r) => [O[0] + r * Math.cos(th * DEG), O[1] - r * Math.sin(th * DEG)];
+      const r0 = 0.52 * Dpx;
+      arc(r0, -d0, 0, RED, 2.4 * k);
+      { const p = onRay(-d0, r0); label(c, 'δθ₀', p[0], p[1] + 17 * k, { align: 'center', italic: true, size: 17 * k, color: RED }); }
+      if (m > 0) {
+        const rt = 0.3 * Dpx, r1 = 0.68 * Dpx;
+        arc(rt, 0, thM, INK, 1.3 * k);
+        { const p = onRay(thM, rt); arrowHead(c, p[0], p[1], -(thM + 90) * DEG, 8 * k, INK); }
+        { const p = onRay(thM / 2, rt + 16 * k); label(c, 'θ', p[0], p[1], { align: 'center', italic: true, size: 17 * k }); }
+        arc(r1, thM, thMin, RED, 2.4 * k);
+        { const p = onRay(thMin, r1); label(c, 'δθ', p[0] - 6 * k, p[1] - 17 * k, { align: 'center', italic: true, size: 17 * k, color: RED }); }
+      } else {
+        arc(r0, 0, d0, RED, 2.4 * k);
+        { const p = onRay(d0, r0); label(c, 'δθ₀', p[0], p[1] - 17 * k, { align: 'center', italic: true, size: 17 * k, color: RED }); }
+      }
+      // rótulos dos máximos, à direita da tela
+      const xl = xs + 20 * k;
+      label(c, 'máximo principal', xl, cy - 9 * k, { size: 14 * k }); label(c, 'central (m = 0)', xl, cy + 9 * k, { size: 14 * k });
+      if (m > 0) { const y = yOf(thM); label(c, 'máximo principal', xl, y - 9 * k, { size: 14 * k }); label(c, `de ordem m = ${m}`, xl, y + 9 * k, { size: 14 * k }); }
+    }
+
+    // ───────── máximo ampliado ─────────
+    function drawZoom() {
+      const s = size(cvZ); if (!s) return;
+      const { w: W, h: H, k, ctx: c } = s;
+      const m = state.m, thM = thetaM(m), thMin = firstMin(m), dth = thMin - thM;
+      const ml = 56 * k, mr = 14 * k, mt = 14 * k, mb = 28 * k, pw = W - ml - mr, ph = H - mt - mb;
+      const a = thM - 2.6 * dth, b = thM + 2.6 * dth;
+      const xs = th => ml + (th - a) / (b - a) * pw, ys = v => mt + ph - v * ph;
+      c.clearRect(0, 0, W, H); c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+      c.font = `${12.5 * k}px ${MONO}`; c.fillStyle = '#4a4540'; c.textAlign = 'right'; c.textBaseline = 'middle';
+      for (let v = 0; v <= 100; v += 25) { line(c, ml, ys(v / 100), ml + pw, ys(v / 100), 'rgba(60,50,45,0.12)', 1); c.fillText(String(v), ml - 7 * k, ys(v / 100)); }
+      const n = Math.max(600, Math.floor(pw * 3));
+      const path = () => { c.beginPath(); for (let i = 0; i <= n; i++) { const th = a + (b - a) * i / n, x = xs(th), y = ys(I(th)); i ? c.lineTo(x, y) : c.moveTo(x, y); } };
+      path(); c.lineTo(xs(b), ys(0)); c.lineTo(xs(a), ys(0)); c.closePath(); c.fillStyle = tint(0.55); c.fill();
+      path(); c.strokeStyle = dark(0.72); c.lineWidth = 1.7 * k; c.lineJoin = 'round'; c.stroke();
+      c.strokeStyle = '#4a4540'; c.lineWidth = 1; c.beginPath(); c.moveTo(ml, mt); c.lineTo(ml, ys(0)); c.lineTo(ml + pw, ys(0)); c.stroke();
+      const step = niceStep(b - a, Math.max(3, Math.floor(pw / (100 * k)))), dg = decimals(step);
+      c.fillStyle = '#4a4540'; c.textAlign = 'center'; c.textBaseline = 'top';
+      for (let th = Math.ceil(a / step) * step; th <= b + 1e-9; th += step) { line(c, xs(th), ys(0), xs(th), ys(0) + 5 * k, '#4a4540', 1); c.fillText(fmt(th, dg) + '°', xs(th), ys(0) + 8 * k); }
+      label(c, 'θ', ml + pw - 6 * k, ys(0) - 13 * k, { align: 'right', italic: true, size: 16 * k, color: '#4a4540' });
+      // δθ: do pico ao primeiro mínimo
+      line(c, xs(thM), mt, xs(thM), ys(0), GREY, 1, [4 * k, 4 * k]); line(c, xs(thMin), mt, xs(thMin), ys(0), GREY, 1, [4 * k, 4 * k]);
+      const yb = ys(0.5), x0 = xs(thM), x1 = xs(thMin);
+      line(c, x0, yb, x1, yb, RED, 2 * k);
+      if (x1 - x0 > 26 * k) { arrowHead(c, x0, yb, Math.PI, 8 * k, RED); arrowHead(c, x1, yb, 0, 8 * k, RED); }
+      label(c, `δθ = ${fmt(dth, dth < 1 ? 3 : 2)}°`, x1 + 10 * k, yb, { italic: true, size: 15 * k, color: RED });
+    }
+
+    // ───────── δθ em função de N ─────────
+    function drawVsN() {
+      const s = size(cvN); if (!s) return;
+      const { w: W, h: H, k, ctx: c } = s;
+      const m = state.m, N0 = 2, N1 = 50;
+      const ml = 60 * k, mr = 16 * k, mt = 14 * k, mb = 28 * k, pw = W - ml - mr, ph = H - mt - mb;
+      layout.ml = ml; layout.pw = pw;
+      const f = N => width(m, N), ymax = (f(N0) || 1) * 1.08;
+      const xs = N => ml + (N - N0) / (N1 - N0) * pw, ys = v => mt + ph - v / ymax * ph;
+      c.clearRect(0, 0, W, H); c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+      const ystep = niceStep(ymax, 4), yd = decimals(ystep);
+      c.font = `${12.5 * k}px ${MONO}`; c.fillStyle = '#4a4540'; c.textAlign = 'right'; c.textBaseline = 'middle';
+      for (let v = 0; v <= ymax; v += ystep) { line(c, ml, ys(v), ml + pw, ys(v), 'rgba(60,50,45,0.12)', 1); c.fillText(fmt(v, yd) + '°', ml - 7 * k, ys(v)); }
+      c.beginPath(); let started = false;
+      for (let N = N0; N <= N1 + 1e-9; N += 0.25) { const v = f(N); if (v == null) continue; const x = xs(N), y = ys(v); started ? c.lineTo(x, y) : c.moveTo(x, y); started = true; }
+      c.strokeStyle = RED; c.lineWidth = 2.2 * k; c.lineJoin = 'round'; c.stroke();
+      c.strokeStyle = '#4a4540'; c.lineWidth = 1; c.beginPath(); c.moveTo(ml, mt); c.lineTo(ml, ys(0)); c.lineTo(ml + pw, ys(0)); c.stroke();
+      c.fillStyle = '#4a4540'; c.textAlign = 'center'; c.textBaseline = 'top';
+      for (const N of [2, 10, 20, 30, 40, 50]) { line(c, xs(N), ys(0), xs(N), ys(0) + 5 * k, '#4a4540', 1); c.fillText(String(N), xs(N), ys(0) + 8 * k); }
+      label(c, 'N', ml + pw - 6 * k, ys(0) - 13 * k, { align: 'right', italic: true, size: 16 * k, color: '#4a4540' });
+      label(c, m === 0 ? 'sen δθ₀ = λ / (N d)' : 'δθ ≈ λ / (N d cos θ)', ml + pw - 10 * k, mt + 14 * k, { align: 'right', italic: true, size: 15 * k, color: RED });
+      const v = f(state.N);
+      if (v != null) {
+        const cx = xs(state.N), cyv = ys(v);
+        line(c, cx, cyv, cx, ys(0), INK, 1.2 * k, [4 * k, 3 * k]); line(c, ml, cyv, cx, cyv, INK, 1.2 * k, [4 * k, 3 * k]);
+        c.beginPath(); c.arc(cx, cyv, 5.5 * k, 0, 2 * Math.PI); c.fillStyle = '#fff'; c.fill(); c.lineWidth = 2.2 * k; c.strokeStyle = INK; c.stroke();
+      }
+    }
+
+    function updateText() {
+      const { N, d, lambda: lam, m } = state, thM = thetaM(m), dth = width(m);
+      $('NOut').textContent = String(N); $('dOut').textContent = fmt(d, 1) + ' µm'; $('lambdaOut').textContent = lam + ' nm';
+      $('status').textContent = m === 0 ? 'Máximo principal central (m = 0)' : `Máximo principal de ordem m = ${m}`;
+      $('zoomTitle').textContent = m === 0 ? 'Máximo central, ampliado' : `Máximo de ordem m = ${m}, ampliado`;
+      $('thOut').textContent = fmt(thM, 2) + '°';
+      $('dthOut').textContent = fmt(dth, 3) + '°';
+      $('apxLbl').textContent = m === 0 ? 'λ / (N d)' : 'λ / (N d cos θ)';
+      $('apxOut').textContent = fmt(lamUm() / (N * d * Math.cos(thM * DEG)) / DEG, 3) + '°';
+      $('ndOut').textContent = fmt(N * d, 1) + ' µm';
+      $('legCurve').style.setProperty('--sumc', dark(0.7));
+      const box = $('mBtns'); box.querySelectorAll('button').forEach(b => b.remove());
+      for (let mm = 0; mm <= 4; mm++) {
+        if (!orderOK(mm)) break;
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = String(mm); b.dataset.m = mm;
+        b.setAttribute('aria-pressed', String(mm === m)); box.appendChild(b);
+      }
+      document.querySelectorAll('#nBtns button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.n === N)));
+    }
+    const clampOrder = () => { while (state.m > 0 && !orderOK(state.m)) state.m--; };
+    const render = () => { drawGeo(); drawZoom(); drawVsN(); };
+    const update = () => { clampOrder(); updateText(); render(); };
+
+    const setN = v => { state.N = Math.max(2, Math.min(50, v)); $('N').value = state.N; };
+    $('N').addEventListener('input', e => { state.N = +e.target.value; update(); });
+    $('nBtns').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if (!b) return; setN(+b.dataset.n); update(); });
+    $('d').addEventListener('input', e => { state.d = +e.target.value; update(); });
+    $('lambda').addEventListener('input', e => { state.lambda = +e.target.value; col = wlToRGB(state.lambda); update(); });
+    $('mBtns').addEventListener('click', e => { const b = e.target.closest('button[data-m]'); if (!b) return; state.m = +b.dataset.m; update(); });
+    const pick = e => {
+      if (e.type === 'pointermove' && !(e.buttons & 1)) return; if (!layout.pw) return;
+      const f = Math.min(1, Math.max(0, (e.clientX - cvN.getBoundingClientRect().left - layout.ml) / layout.pw));
+      setN(Math.round(2 + f * 48)); update();
+    };
+    cvN.addEventListener('pointerdown', pick); cvN.addEventListener('pointermove', pick);
+
+    let last = null;
+    function loop(ts) {
+      if (!state.animN) return;
+      const dt = last != null ? Math.min(0.05, (ts - last) / 1000) : 0; last = ts; state.acc += dt;
+      if (state.acc >= 0.35) { state.acc = 0; let n = state.N + state.dir;
+        if (n >= 50) { n = 50; state.dir = -1; } else if (n <= 2) { n = 2; state.dir = 1; } setN(n); update(); }
+      requestAnimationFrame(loop);
+    }
+    $('animN').addEventListener('click', () => {
+      state.animN = !state.animN; state.acc = 0; $('animN').textContent = state.animN ? '❚❚ Parar N' : '▶ Aumentar N';
+      if (state.animN) { last = null; requestAnimationFrame(loop); }
+    });
+
+    col = wlToRGB(state.lambda); watch(render); update();
+  })();
+  </script>
+</body>
+</html>
