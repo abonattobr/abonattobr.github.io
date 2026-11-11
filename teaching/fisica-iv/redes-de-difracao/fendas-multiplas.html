@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fendas múltiplas: intensidade e fasores · Física IV · Prof. Alexandre Bonatto</title>
+  <meta name="description" content="Simulação de fendas múltiplas: como o número N de fendas estreita os máximos principais, com a soma dos N fasores para cada ângulo θ." />
+  <link rel="stylesheet" href="../../assets/sim.css?v=202611111034" />
+  <style>
+    .sheet.top { flex: 1; }
+    .sheet.bottom { flex: 1.12; flex-direction: row; gap: .8rem; }
+    .cv.stripcv { flex: none; height: 3rem; }
+    .phbox { flex: 1.45; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: .25rem; }
+    .phbox h2 { display: flex; justify-content: space-between; gap: .8rem; }
+    .phbox h2 span { text-transform: none; letter-spacing: 0; font-family: var(--mono); font-weight: 400; font-size: .85rem; color: #1e1c19; }
+    .phbox h2 label { text-transform: none; letter-spacing: 0; font-size: .85rem; color: #1e1c19; }
+    .info { flex: 1; min-width: 0; min-height: 0; overflow: auto; display: flex; flex-direction: column; justify-content: center; gap: .55rem;
+            padding: .2rem .2rem .2rem .9rem; border-left: 1px solid #e3e9f0; font-size: .9rem; color: #3b3731; }
+    .info .eq { font-size: 1.12rem; gap: .35rem; color: #1e1c19; }
+    .info p { margin: 0; }
+    .info b { color: #1a3a5c; }
+    .plot canvas, .stripcv canvas { cursor: crosshair; touch-action: pan-y; }
+    .legend .lcurve { color: var(--sumc, #2f7d32); } .legend .lenv { color: #5a554c; } .legend .lord { color: #5a6a7a; }
+    .legend .lord i { border-top-style: dotted; border-top-width: 2px; }
+    @media (max-width: 900px), (max-height: 460px) {
+      .sheet.bottom { flex-direction: column; } .info { border-left: none; border-top: 1px solid #e3e9f0; padding: .6rem .2rem 0; overflow: visible; }
+      .cv.stripcv { aspect-ratio: auto; height: 3rem; } .phbox .cv { aspect-ratio: 4 / 3; }
+    }
+  </style>
+</head>
+<body data-course="fisica-iv" data-topic="redes-de-difracao" data-sim="fendas-multiplas">
+
+  <main class="stage">
+    <h1 class="sr-only">Fendas múltiplas: intensidade e fasores</h1>
+
+    <section class="view">
+      <div class="sheet grow top">
+        <div class="legend">
+          <span class="lcurve" id="legCurve"><i></i> intensidade relativa de N fendas</span>
+          <span class="lenv dash"><i></i> envoltória de difração de uma fenda</span>
+          <span class="lord"><i></i> máximos principais: d senθ = mλ</span>
+          <span>clique no gráfico para escolher θ; a faixa escura mostra o padrão na tela</span>
+        </div>
+        <div class="cv plot"><canvas id="plot" aria-label="Intensidade relativa em função do ângulo θ"></canvas></div>
+        <div class="cv stripcv"><canvas id="strip" aria-label="Padrão de intensidade como visto numa tela"></canvas></div>
+      </div>
+
+      <div class="sheet grow bottom">
+        <div class="phbox">
+          <h2>Fasores no ângulo θ selecionado <span id="phCap"></span>
+            <label class="check" title="Amplia o desenho para ocupar o quadro; a escala deixa de ser fixa"><input type="checkbox" id="fit" /> ampliar fasores</label></h2>
+          <div class="cv"><canvas id="phasors" aria-label="Soma dos N fasores e fasor resultante"></canvas></div>
+        </div>
+        <div class="info">
+          <div class="eq">
+            <span>Δ<span class="v">ϕ</span> =</span>
+            <span class="frac"><span class="num">2π</span><span class="den"><span class="v">λ</span></span></span>
+            <span><span class="v">d</span> sen <span class="v">θ</span></span>
+          </div>
+          <div class="eq">
+            <span><span class="v">I</span> = <span class="v">I</span><sub>máx</sub></span>
+            <span class="paren">[</span><span class="frac"><span class="num">sen(<span class="v">N</span>Δ<span class="v">ϕ</span>/2)</span><span class="den"><span class="v">N</span> sen(Δ<span class="v">ϕ</span>/2)</span></span><span class="paren">]</span><sup>2</sup>
+            <span>sinc<sup>2</sup></span><span class="paren">(</span><span class="frac"><span class="num">π <span class="v">a</span> sen <span class="v">θ</span></span><span class="den"><span class="v">λ</span></span></span><span class="paren">)</span>
+          </div>
+          <p><b>Máximos principais:</b> d senθ = mλ, ou Δϕ = 2πm. Os N fasores ficam alinhados e E<sub>θ</sub> = N·E₀.</p>
+          <p><b>Mínimos:</b> Δϕ = 2π·k/N, com k não múltiplo de N. Os fasores fecham um polígono e E<sub>θ</sub> = 0. O primeiro é Δϕ = 2π/N, isto é, ΔL = λ/N.</p>
+          <p>Entre dois máximos principais há N − 1 mínimos e N − 2 máximos secundários.</p>
+          <p id="widthLine"></p>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="card">
+        <h2>Rede e luz</h2>
+        <div class="ctrl">
+          <label for="N"><span>Número de fendas, N</span><output id="NOut" for="N">5</output></label>
+          <input type="range" id="N" min="1" max="30" step="1" value="5" />
+          <div class="presets" id="nBtns" role="group" aria-label="Valores de N">
+            <button type="button" data-n="1">1</button><button type="button" data-n="2">2</button><button type="button" data-n="3">3</button>
+            <button type="button" data-n="5">5</button><button type="button" data-n="10">10</button><button type="button" data-n="20">20</button>
+          </div>
+        </div>
+        <div class="ctrl">
+          <label for="d"><span>Distância entre fendas, d</span><output id="dOut" for="d">10,0 µm</output></label>
+          <input type="range" id="d" min="2" max="30" step="0.5" value="10" />
+        </div>
+        <div class="ctrl">
+          <label for="a"><span>Largura das fendas, a</span><output id="aOut" for="a">2,0 µm</output></label>
+          <input type="range" id="a" min="0.5" max="10" step="0.1" value="2" />
+          <label class="check"><input type="checkbox" id="diff" checked /> Incluir a difração de cada fenda</label>
+        </div>
+        <div class="ctrl">
+          <label for="lambda"><span>Comprimento de onda, λ</span><output id="lambdaOut" for="lambda">550 nm</output></label>
+          <input type="range" id="lambda" min="380" max="750" step="1" value="550" />
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Ângulo</h2>
+        <div class="ctrl">
+          <label for="theta"><span>Ângulo θ</span><output id="thetaOut" for="theta">0,00°</output></label>
+          <input type="range" id="theta" min="-8" max="8" step="0.01" value="0" />
+          <div class="presets" id="goBtns"><span class="lbl">ir para:</span></div>
+        </div>
+        <div class="ctrl">
+          <label for="thmax"><span>Faixa angular, ±θ<sub>max</sub></span><output id="thmaxOut" for="thmax">8,0°</output></label>
+          <input type="range" id="thmax" min="1" max="30" step="0.5" value="8" />
+        </div>
+        <div class="ctrl row">
+          <button type="button" class="btn primary" id="sweep">▶ Varrer θ</button>
+          <button type="button" class="btn" id="animN">▶ Aumentar N</button>
+        </div>
+      </div>
+
+      <div class="readout" id="readout" aria-live="polite">
+        <p class="status" id="status">Máximo principal central (m = 0)</p>
+        <dl>
+          <dt>Δϕ entre fendas vizinhas</dt><dd id="dphiOut">0,0°</dd>
+          <dt>ΔL = d senθ</dt><dd id="dLOut">0,000 µm = 0,00 λ</dd>
+          <dt>Fasor resultante E<sub>θ</sub></dt><dd id="EOut">5,00 E₀</dd>
+          <dt>I / I<sub>máx</sub></dt><dd id="IOut">100 %</dd>
+        </dl>
+      </div>
+
+      <p class="note">E₀ é a amplitude da onda de uma fenda em θ = 0. Sem a difração, todas as ordens têm a mesma intensidade, como na figura do livro; com ela, cada fasor encolhe pelo fator sinc(π a senθ/λ).</p>
+    </aside>
+  </main>
+
+  <script src="../../catalog.js?v=202611111034"></script>
+  <script src="../../assets/sim.js?v=202611111034"></script>
+  <script>
+  (function () {
+    const { fmt, size, watch, line, arrowHead, label, wlToRGB, MONO } = Sim;
+    // unidades: d e a em µm, λ em nm, θ em graus
+    const state = { N: 5, d: 10, a: 2, lambda: 550, theta: 0, thmax: 8, diff: true, fit: false,
+                    sweep: false, dir: 1, animN: false, accN: 0, dirN: 1 };
+    const DEG = Math.PI / 180, INK = '#1e1c19', GREY = '#5a6a7a';
+    const $ = id => document.getElementById(id);
+    const cvP = $('plot'), cvS = $('strip'), cvF = $('phasors');
+    const lamUm = () => state.lambda / 1000;
+    const phi = th => 2 * Math.PI * state.d * Math.sin(th * DEG) / lamUm();          // fase entre fendas vizinhas
+    const sinc = x => x === 0 ? 1 : Math.sin(x) / x;
+    const slit = th => state.diff ? sinc(Math.PI * state.a * Math.sin(th * DEG) / lamUm()) : 1;   // amplitude de uma fenda, em E₀
+    function arrayFactor(ph) {                                                       // |soma dos N fasores| / N, com sinal
+      const s = Math.sin(ph / 2); if (Math.abs(s) < 1e-7) return 1;
+      return Math.sin(state.N * ph / 2) / (state.N * s);
+    }
+    const I = th => { const f = arrayFactor(phi(th)) * slit(th); return f * f; };
+
+    let col = [0, 255, 0];
+    const mixWhite = (v, w) => Math.round(255 + (v - 255) * w);
+    const tint = w => `rgb(${mixWhite(col[0], w)},${mixWhite(col[1], w)},${mixWhite(col[2], w)})`;
+    const dark = w => `rgb(${Math.round(col[0] * w)},${Math.round(col[1] * w)},${Math.round(col[2] * w)})`;
+
+    function classify() {
+      const N = state.N, u = phi(state.theta) / (2 * Math.PI), m = Math.round(u);
+      if (N === 1) return { kind: 'single' };
+      if (Math.abs(N * (u - m)) < 0.08) return { kind: 'max', m };
+      const x = N * u, kk = Math.round(x);
+      if (Math.abs(x - kk) < 0.08 && kk % N !== 0) return { kind: 'min', k: kk };
+      return { kind: 'mid' };
+    }
+    function niceStep(range, target) {
+      const raw = range / target, p = Math.pow(10, Math.floor(Math.log10(raw)));
+      for (const m of [1, 2, 5, 10]) if (raw <= m * p) return m * p;
+      return 10 * p;
+    }
+    const layout = {};
+
+    // ───────── gráfico de intensidade ─────────
+    function drawPlot() {
+      const s = size(cvP); if (!s) return;
+      const { w: W, h: H, k, ctx: c } = s;
+      const ml = 58 * k, mr = 16 * k, mt = 26 * k, mb = 28 * k, pw = W - ml - mr, ph = H - mt - mb, T = state.thmax;
+      layout.ml = ml; layout.pw = pw;
+      const xs = th => ml + (th + T) / (2 * T) * pw, ys = v => mt + ph - v * ph;
+      c.clearRect(0, 0, W, H); c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+      c.font = `${12.5 * k}px ${MONO}`; c.fillStyle = '#4a4540';
+      c.textAlign = 'right'; c.textBaseline = 'middle';
+      for (let v = 0; v <= 100; v += 20) { line(c, ml, ys(v / 100), ml + pw, ys(v / 100), 'rgba(60,50,45,0.12)', 1); c.fillText(String(v), ml - 7 * k, ys(v / 100)); }
+      c.save(); c.translate(13 * k, mt + ph / 2); c.rotate(-Math.PI / 2);
+      label(c, 'I / Imáx (%)', 0, 0, { align: 'center', size: 12.5 * k, mono: true, color: '#4a4540' }); c.restore();
+      // ordens dos máximos principais
+      const lam = lamUm();
+      for (let m = -40; m <= 40; m++) {
+        const sn = m * lam / state.d; if (Math.abs(sn) >= 1) continue;
+        const th = Math.asin(sn) / DEG; if (Math.abs(th) > T) continue;
+        line(c, xs(th), mt, xs(th), ys(0), 'rgba(90,106,122,0.55)', 1, [2 * k, 4 * k]);
+        if (pw / (2 * T) * (Math.asin(lam / state.d) / DEG) > 34 * k || m % 2 === 0)
+          label(c, 'm = ' + m, xs(th), mt - 12 * k, { align: 'center', size: 12.5 * k, color: GREY });
+      }
+      // curva (4 amostras por pixel, para não perder os máximos estreitos)
+      const n = Math.max(800, Math.floor(pw * 4));
+      const path = fn => { c.beginPath(); for (let i = 0; i <= n; i++) { const th = -T + 2 * T * i / n, x = xs(th), y = ys(fn(th)); i ? c.lineTo(x, y) : c.moveTo(x, y); } };
+      path(I); c.lineTo(xs(T), ys(0)); c.lineTo(xs(-T), ys(0)); c.closePath(); c.fillStyle = tint(0.55); c.fill();
+      path(I); c.strokeStyle = dark(0.72); c.lineWidth = 1.6 * k; c.lineJoin = 'round'; c.stroke();
+      if (state.diff && state.N > 1) { c.save(); c.setLineDash([7 * k, 5 * k]); path(th => { const v = slit(th); return v * v; }); c.strokeStyle = 'rgba(60,50,45,0.7)'; c.lineWidth = 1.4 * k; c.stroke(); c.restore(); }
+      // eixo x
+      c.strokeStyle = '#4a4540'; c.lineWidth = 1; c.beginPath(); c.moveTo(ml, mt); c.lineTo(ml, ys(0)); c.lineTo(ml + pw, ys(0)); c.stroke();
+      c.fillStyle = '#4a4540'; c.font = `${12.5 * k}px ${MONO}`; c.textAlign = 'center'; c.textBaseline = 'top';
+      const step = niceStep(2 * T, Math.max(4, Math.floor(pw / (95 * k))));
+      for (let th = -Math.floor(T / step) * step; th <= T + 1e-9; th += step) {
+        line(c, xs(th), ys(0), xs(th), ys(0) + 5 * k, '#4a4540', 1);
+        c.fillText(fmt(th, step < 1 ? 1 : 0) + '°', xs(th), ys(0) + 8 * k);
+      }
+      label(c, 'θ', ml + pw - 6 * k, ys(0) - 13 * k, { align: 'right', italic: true, size: 16 * k, color: '#4a4540' });
+      // marcador do ângulo selecionado
+      const cx = xs(state.theta), cyv = ys(I(state.theta));
+      line(c, cx, mt, cx, ys(0), INK, 1.3 * k, [4 * k, 3 * k]);
+      c.beginPath(); c.arc(cx, cyv, 5.5 * k, 0, 2 * Math.PI); c.fillStyle = '#fff'; c.fill(); c.lineWidth = 2.2 * k; c.strokeStyle = INK; c.stroke();
+    }
+
+    // ───────── padrão na tela ─────────
+    function drawStrip() {
+      const s = size(cvS); if (!s) return;
+      const { w: W, h: H, k, ctx: c } = s;
+      const ml = 58 * k, mr = 16 * k, pw = W - ml - mr, T = state.thmax;
+      c.clearRect(0, 0, W, H); c.fillStyle = '#000'; c.fillRect(ml, 0, pw, H);
+      const n = Math.max(2, Math.round(pw));
+      for (let i = 0; i < n; i++) {
+        let v = 0; for (let j = 0; j < 4; j++) v += I(-T + 2 * T * (i + (j + 0.5) / 4) / n);
+        const b = Math.pow(v / 4, 0.6);                              // realce dos máximos fracos, como o olho faz
+        c.fillStyle = `rgb(${Math.round(col[0] * b)},${Math.round(col[1] * b)},${Math.round(col[2] * b)})`;
+        c.fillRect(ml + pw * i / n, 0, pw / n + 0.6, H);
+      }
+      const cx = ml + (state.theta + T) / (2 * T) * pw;
+      line(c, cx, 0, cx, H, 'rgba(255,255,255,0.8)', 1.2 * k, [3 * k, 3 * k]);
+      label(c, 'tela', ml - 8 * k, H / 2, { align: 'right', size: 12 * k, mono: true, color: '#4a4540' });
+    }
+
+    // ───────── fasores ─────────
+    function drawPhasors() {
+      const s = size(cvF); if (!s) return;
+      const { w: W, h: H, k, ctx: c } = s;
+      c.clearRect(0, 0, W, H); c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+      const N = state.N, ph = phi(state.theta), sl = slit(state.theta), mg = 22 * k;
+      // escala fixa: a cadeia alinhada (N·E₀) ocupa a largura; o arco mais alto (≈ 0,73·N·E₀) cabe na altura
+      let L = Math.min((W - 2 * mg) / N, (H - 2 * mg) / (0.75 * N), 0.34 * W);
+      let pts, x0, x1, y0, y1;
+      const build = () => {
+        pts = [[0, 0]]; let x = 0, y = 0; x0 = x1 = y0 = y1 = 0;
+        for (let j = 0; j < N; j++) { x += L * sl * Math.cos(j * ph); y += L * sl * Math.sin(j * ph); pts.push([x, y]); }
+        pts.forEach(p => { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); });
+      };
+      build();
+      if (state.fit) {   // amplia até o desenho ocupar o quadro (deixa margem para os rótulos)
+        const z = Math.min((W - 6 * mg) / Math.max(x1 - x0, 1), (H - 4 * mg) / Math.max(y1 - y0, 1), 12);
+        if (z > 1) { L *= z; build(); }
+      }
+      const ox = W / 2 - (x0 + x1) / 2, oy = H / 2 + (y0 + y1) / 2;
+      const P = pts.map(p => [ox + p[0], oy - p[1]]);
+      const O = P[0], E = P[N], R = Math.hypot(E[0] - O[0], E[1] - O[1]);
+      // linha de referência (direção do primeiro fasor)
+      line(c, mg / 2, O[1], W - mg / 2, O[1], 'rgba(90,106,122,0.25)', 1, [4 * k, 5 * k]);
+      // resultante, por baixo da cadeia
+      if (R > 3) {
+        c.save(); c.globalAlpha = 0.85; line(c, O[0], O[1], E[0], E[1], tint(0.9), 8 * k);
+        const ang = Math.atan2(E[1] - O[1], E[0] - O[0]);
+        if (R > 14 * k) arrowHead(c, E[0] + 6 * k * Math.cos(ang), E[1] + 6 * k * Math.sin(ang), ang, 20 * k, dark(0.85));
+        c.restore();
+        line(c, O[0], O[1], E[0], E[1], dark(0.85), 2 * k);
+      }
+      // cadeia de fasores
+      const seg = L * Math.abs(sl), hs = Math.max(3, Math.min(10 * k, 0.4 * seg));
+      for (let j = 0; j < N; j++) {
+        const A = P[j], B = P[j + 1];
+        line(c, A[0], A[1], B[0], B[1], INK, Math.min(2 * k, Math.max(1, seg / 10)));
+        if (seg > 5) arrowHead(c, B[0], B[1], Math.atan2(B[1] - A[1], B[0] - A[0]), hs, INK);
+      }
+      c.beginPath(); c.arc(O[0], O[1], 4.8 * k, 0, 2 * Math.PI); c.fillStyle = INK; c.fill();
+      // ângulo Δϕ entre o primeiro e o segundo fasor
+      const phw = Math.atan2(Math.sin(ph), Math.cos(ph));
+      if (N >= 2 && seg > 34 * k && Math.abs(phw) > 4 * DEG) {
+        const J = P[1], base = sl < 0 ? Math.PI : 0, r = Math.min(0.42 * seg, 46 * k);
+        line(c, J[0], J[1], J[0] + 0.75 * seg * Math.cos(base), J[1] - 0.75 * seg * Math.sin(base), GREY, 1, [4 * k, 4 * k]);
+        c.save(); c.strokeStyle = '#c6302a'; c.lineWidth = 1.6 * k; c.beginPath();
+        c.arc(J[0], J[1], r, -base, -(base + phw), phw > 0); c.stroke(); c.restore();
+        const am = base + phw / 2;
+        label(c, 'Δϕ', J[0] + (r + 15 * k) * Math.cos(am), J[1] - (r + 15 * k) * Math.sin(am), { align: 'center', italic: true, size: 15 * k, color: '#c6302a' });
+      }
+      // rótulo da resultante
+      if (R < 0.03 * N * L) label(c, 'Eθ = 0', O[0], O[1] + 20 * k, { align: 'center', italic: true, size: 16 * k, color: dark(0.7) });
+      else {
+        const ang = Math.atan2(E[1] - O[1], E[0] - O[0]), nx = -Math.sin(ang), ny = Math.cos(ang);
+        label(c, 'Eθ', (O[0] + E[0]) / 2 + nx * 18 * k, (O[1] + E[1]) / 2 + ny * 18 * k, { align: 'center', italic: true, size: 16 * k, color: dark(0.7) });
+      }
+    }
+
+    // ───────── textos ─────────
+    function updateText() {
+      const { N, d, a, lambda: lam, theta: th } = state, kd = classify();
+      const ph = phi(th), deg = ph / DEG, wrap = Math.atan2(Math.sin(ph), Math.cos(ph)) / DEG;
+      const E = Math.abs(arrayFactor(ph) * slit(th)) * N, Iv = I(th);
+      $('NOut').textContent = String(N); $('dOut').textContent = fmt(d, 1) + ' µm'; $('aOut').textContent = fmt(a, 1) + ' µm';
+      $('lambdaOut').textContent = lam + ' nm'; $('thetaOut').textContent = fmt(th, 2) + '°'; $('thmaxOut').textContent = fmt(state.thmax, 1) + '°';
+      $('status').textContent = kd.kind === 'max' ? (kd.m === 0 ? 'Máximo principal central (m = 0)' : `Máximo principal de ordem m = ${kd.m}`)
+        : kd.kind === 'min' ? 'Mínimo: os fasores fecham o polígono'
+        : kd.kind === 'single' ? 'Uma fenda: só o padrão de difração' : 'Entre um máximo e um mínimo';
+      $('dphiOut').textContent = Math.abs(deg) > 180.05 ? `${fmt(deg, 1)}° (≡ ${fmt(wrap, 1)}°)` : fmt(deg, 1) + '°';
+      const dL = d * Math.sin(th * DEG);
+      $('dLOut').textContent = `${fmt(dL, 3)} µm = ${fmt(dL / lamUm(), 3)} λ`;
+      $('EOut').textContent = fmt(E, 2) + ' E₀';
+      $('IOut').textContent = fmt(100 * Iv, Iv < 0.1 ? 2 : 1) + ' %';
+      $('phCap').textContent = `N = ${N} · Δϕ = ${fmt(wrap, 1)}° · Eθ = ${fmt(E, 2)} E₀`;
+      $('readout').style.background = tint(0.5 * Math.min(1, Iv));
+      $('legCurve').style.setProperty('--sumc', dark(0.7));
+      const sn = lamUm() / (N * d);
+      $('widthLine').innerHTML = N > 1 && sn < 1
+        ? `<b>Largura do máximo central:</b> do pico ao primeiro mínimo, δθ₀ = arcsen(λ/Nd) = ${fmt(Math.asin(sn) / DEG, 3)}°. Quanto maior N, mais estreito.`
+        : '<b>Com uma única fenda</b> não há fasores para somar: resta o padrão de difração da fenda.';
+      // atalhos de θ
+      const box = $('goBtns'); box.querySelectorAll('button').forEach(b => b.remove());
+      const add = (txt, sinv, title) => {
+        if (Math.abs(sinv) >= 1) return; const t = Math.asin(sinv) / DEG; if (t > state.thmax) return;
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = txt; b.title = title; b.dataset.theta = t.toFixed(5);
+        b.setAttribute('aria-pressed', String(Math.abs(th - t) < 0.004)); box.appendChild(b);
+      };
+      add('m = 0', 0, 'máximo central: fasores alinhados');
+      if (N >= 2) add('1º mín.', lamUm() / (N * d), 'Δϕ = 2π/N: polígono de N lados');
+      if (N >= 3) add('2º mín.', 2 * lamUm() / (N * d), 'Δϕ = 4π/N');
+      if (N >= 3) add('máx. sec.', 1.5 * lamUm() / (N * d), 'perto do primeiro máximo secundário');
+      add('m = 1', lamUm() / d, 'máximo principal de ordem 1');
+      document.querySelectorAll('#nBtns button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.n === N)));
+    }
+    const render = () => { drawPlot(); drawStrip(); drawPhasors(); };
+    const update = () => { updateText(); render(); };
+
+    // ───────── eventos ─────────
+    const setTheta = v => { state.theta = Math.max(-state.thmax, Math.min(state.thmax, v)); $('theta').value = state.theta; };
+    const setN = v => { state.N = v; $('N').value = v; };
+    $('N').addEventListener('input', e => { state.N = +e.target.value; update(); });
+    $('nBtns').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if (!b) return; setN(+b.dataset.n); update(); });
+    $('d').addEventListener('input', e => {
+      state.d = +e.target.value; $('a').max = state.d;
+      if (state.a > state.d) { state.a = state.d; $('a').value = state.a; } update();
+    });
+    $('a').addEventListener('input', e => { state.a = Math.min(+e.target.value, state.d); update(); });
+    $('diff').addEventListener('change', e => { state.diff = e.target.checked; update(); });
+    $('fit').addEventListener('change', e => { state.fit = e.target.checked; render(); });
+    $('lambda').addEventListener('input', e => { state.lambda = +e.target.value; col = wlToRGB(state.lambda); update(); });
+    $('theta').addEventListener('input', e => { state.theta = +e.target.value; update(); });
+    $('thmax').addEventListener('input', e => {
+      state.thmax = +e.target.value; $('theta').min = -state.thmax; $('theta').max = state.thmax; setTheta(state.theta); update();
+    });
+    $('goBtns').addEventListener('click', e => { const b = e.target.closest('button[data-theta]'); if (!b) return; setTheta(+b.dataset.theta); update(); });
+    const pick = cv => {
+      const h = e => {
+        if (e.type === 'pointermove' && !(e.buttons & 1)) return;
+        if (!layout.pw) return;
+        const f = Math.min(1, Math.max(0, (e.clientX - cv.getBoundingClientRect().left - layout.ml) / layout.pw));
+        setTheta(Math.round((-state.thmax + f * 2 * state.thmax) * 100) / 100); update();
+      };
+      cv.addEventListener('pointerdown', h); cv.addEventListener('pointermove', h);
+    };
+    pick(cvP); pick(cvS);
+
+    let last = null, running = false;
+    function loop(ts) {
+      if (!state.sweep && !state.animN) { running = false; return; }
+      const dt = last != null ? Math.min(0.05, (ts - last) / 1000) : 0; last = ts;
+      if (state.sweep) {
+        const T = state.thmax; let v = state.theta + state.dir * (T / 8) * dt;
+        if (v >= T) { v = T; state.dir = -1; } else if (v <= -T) { v = -T; state.dir = 1; }
+        setTheta(v);
+      }
+      if (state.animN) {
+        state.accN += dt;
+        if (state.accN >= 0.9) { state.accN = 0; let n = state.N + state.dirN;
+          if (n >= 20) { n = 20; state.dirN = -1; } else if (n <= 1) { n = 1; state.dirN = 1; } setN(n); }
+      }
+      update(); requestAnimationFrame(loop);
+    }
+    const start = () => { if (!running) { running = true; last = null; requestAnimationFrame(loop); } };
+    $('sweep').addEventListener('click', () => { state.sweep = !state.sweep; $('sweep').textContent = state.sweep ? '❚❚ Pausar θ' : '▶ Varrer θ'; if (state.sweep) start(); });
+    $('animN').addEventListener('click', () => { state.animN = !state.animN; state.accN = 0; $('animN').textContent = state.animN ? '❚❚ Parar N' : '▶ Aumentar N'; if (state.animN) start(); });
+
+    col = wlToRGB(state.lambda); $('a').max = state.d; watch(render); update();
+  })();
+  </script>
+</body>
+</html>

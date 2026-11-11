@@ -18,6 +18,14 @@ window.TEACHING = {
             { slug: 'fenda-dupla',          name: 'Fenda dupla: interferência e difração',
               desc: 'Padrão de Fraunhofer de duas fendas de largura a separadas por d, com mapa de intensidade.' }
           ]
+        },
+        {
+          id: 'redes-de-difracao',
+          name: 'Redes de Difração',
+          sims: [
+            { slug: 'fendas-multiplas',     name: 'Fendas múltiplas: intensidade e fasores',
+              desc: 'Como o número N de fendas estreita os máximos principais, com a soma dos N fasores para cada ângulo θ.' }
+          ]
         }
       ]
     },
