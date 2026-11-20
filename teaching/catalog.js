@@ -28,7 +28,9 @@ window.TEACHING = {
             { slug: 'largura-dos-maximos',  name: 'Largura dos máximos principais',
               desc: 'Os ângulos δθ₀ e δθ entre um máximo e o primeiro mínimo, e como eles diminuem com a largura N·d da rede.' },
             { slug: 'dispersao-e-resolucao', name: 'Dispersão e poder de resolução',
-              desc: 'Duas linhas espectrais próximas: a dispersão D = m/(d cos θ) as afasta e R = N·m decide se são resolvidas.' }
+              desc: 'Duas linhas espectrais próximas: a dispersão D = m/(d cos θ) as afasta e R = N·m decide se são resolvidas.' },
+            { slug: 'lei-de-bragg',         name: 'Difração de raios X: lei de Bragg',
+              desc: 'Famílias de planos em uma rede cristalina e a condição 2d·senθ = mλ para haver feixe difratado.' }
           ]
         }
       ]
