@@ -119,6 +119,16 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .eqs .v { font-style: italic; }
 .eqs small { font-family: var(--ui); font-size: .8rem; color: var(--muted); }
 
+/* ── Cabeçalho de folha e barra de reprodução (animações com linha do tempo) ── */
+.head { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.3rem; padding: .1rem .3rem 0; }
+.sheet h2.ttl { font-size: 1.05rem; letter-spacing: 0; text-transform: none; color: var(--primary); margin: 0; }
+.head .sub { font-size: .85rem; color: var(--muted); }
+.sheet.transport { flex-direction: row; align-items: center; gap: .8rem; padding: .5rem .8rem; }
+.transport .btn.primary { min-width: 8.2em; }
+.transport .tl { flex: 1; min-width: 0; display: grid; gap: .1rem; }
+.transport .tl label { display: flex; justify-content: space-between; align-items: baseline; gap: .6rem; font-size: .9rem; font-weight: 600; }
+.transport output { font-family: var(--mono); font-weight: 400; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
 /* ── Telas estreitas (celular): empilha e deixa a página rolar ── */
 @media (max-width: 900px), (max-height: 460px) {
   html, body { height: auto; }
@@ -131,6 +141,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   .cv.wide { aspect-ratio: 3 / 1; }
   .cv.square { aspect-ratio: 1; }
   .panel { overflow: visible; }
+  .sheet.transport { flex-wrap: wrap; }
+  .transport .tl { flex-basis: 100%; }
   .eq { font-size: 1.15rem; }
 }
 @media (prefers-reduced-motion: reduce) { .readout { transition: none; } }

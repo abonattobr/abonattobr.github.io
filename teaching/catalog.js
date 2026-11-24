@@ -38,7 +38,9 @@ window.TEACHING = {
           name: 'Relatividade',
           sims: [
             { slug: 'relogio-de-luz',       name: 'Relógio de luz em dois referenciais',
-              desc: 'Um pulso de luz vai ao espelho e volta, visto do vagão e da plataforma: dilatação do tempo e contração do comprimento.' }
+              desc: 'Um pulso de luz vai ao espelho e volta, visto do vagão e da plataforma: dilatação do tempo e contração do comprimento.' },
+            { slug: 'adicao-de-velocidades', name: 'Adição de velocidades',
+              desc: 'Soma clássica de Galileu e composição relativística de Einstein para movimentos no mesmo eixo.' }
           ]
         }
       ]

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adição de velocidades · Física IV · Prof. Alexandre Bonatto</title>
+  <meta name="description" content="Compare a soma clássica de Galileu e a composição relativística de Einstein para velocidades ao longo do mesmo eixo: u = (v + u′)/(1 + vu′/c²)." />
+  <link rel="stylesheet" href="../../assets/sim.css?v=202611241101" />
+  <style>
+    .head .eq { font-size: 1.2rem; }
+    .result { margin-left: auto; font-family: var(--mono); font-size: 1.45rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    [data-model="classical"] .result { color: #c2610c; }
+    [data-model="classical"] .result.over { color: var(--hot); }
+    [data-model="relativistic"] .result { color: var(--w1); }
+    .legend .lgal { color: #c2610c; } .legend .lein { color: var(--w1); } .legend .llight { color: #8a6a00; }
+    .legend .band { display: inline-block; width: 1.6rem; height: .8rem; border: 0; background: rgba(240,190,40,.35); }
+    #plot { cursor: crosshair; touch-action: pan-y; }
+    .numf { display: inline-flex; align-items: baseline; gap: .3rem; font-family: var(--math); font-style: italic; font-weight: 400; }
+    .numf input { font: inherit; font-family: var(--mono); font-style: normal; font-size: .9rem; width: 6.2em; text-align: right; padding: .12rem .35rem; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text); }
+    .numf input[aria-invalid="true"] { border-color: var(--hot); }
+    .ctrl i.v { font-family: var(--math); font-weight: 400; }
+    .work { margin: .5rem 0 0; font-family: var(--mono); font-size: .82rem; color: #5a554c; overflow-wrap: anywhere; }
+    .work + .work { margin-top: .15rem; }
+  </style>
+</head>
+<body data-course="fisica-iv" data-topic="relatividade" data-sim="adicao-de-velocidades">
+
+  <main class="stage three">
+    <h1 class="sr-only">Adição de velocidades</h1>
+
+    <section class="view">
+      <div class="legend">
+        <span class="llight dash"><i></i> luz emitida na origem, x = ±ct</span>
+        <span><i class="band"></i> região que a luz já alcançou</span>
+        <span>mesma escala nas duas cenas</span>
+      </div>
+
+      <div class="sheet grow" data-model="classical">
+        <div class="head">
+          <h2 class="ttl">Soma clássica de Galileu</h2>
+          <div class="eq" aria-label="u de Galileu é igual a v mais u linha"><span><span class="v">u</span><sub>G</sub> = <span class="v">v</span> + <span class="v">u</span>′</span></div>
+          <output class="result">1,2 c</output>
+        </div>
+        <div class="cv"><canvas aria-label="Posições do vagão e do objeto previstas por Galileu, em segundos-luz."></canvas></div>
+      </div>
+
+      <div class="sheet grow" data-model="relativistic">
+        <div class="head">
+          <h2 class="ttl">Composição de Einstein</h2>
+          <div class="eq" aria-label="u é igual a v mais u linha, dividido por um mais v vezes u linha sobre c ao quadrado"><span><span class="v">u</span> =</span><span class="frac"><span class="num"><span class="v">v</span> + <span class="v">u</span>′</span><span class="den">1 + <span class="v">v</span> <span class="v">u</span>′/<span class="v">c</span><sup>2</sup></span></span></div>
+          <output class="result">0,882353 c</output>
+        </div>
+        <div class="cv"><canvas aria-label="Posições do vagão e do objeto previstas por Einstein, em segundos-luz."></canvas></div>
+      </div>
+
+      <div class="sheet transport">
+        <button type="button" class="btn primary" id="play">▶ Reproduzir</button>
+        <button type="button" class="btn" id="reset">Reiniciar</button>
+        <div class="tl">
+          <label for="timeline"><span>Tempo na plataforma</span><output id="timelineOut" for="timeline">0,0 s</output></label>
+          <input type="range" id="timeline" min="0" max="1000" step="1" value="0" />
+        </div>
+      </div>
+    </section>
+
+    <section class="col">
+      <div class="sheet grow">
+        <h2>Velocidade na plataforma em função de u′</h2>
+        <div class="legend">
+          <span class="lgal"><i></i> Galileu</span>
+          <span class="lein"><i></i> Einstein</span>
+          <span><i class="band"></i> |u| ≤ c</span>
+        </div>
+        <div class="cv tall"><canvas id="plot" aria-label="Gráfico de u em função de u linha para o valor atual de v: reta de Galileu e curva de Einstein, que nunca sai da faixa entre menos c e c."></canvas></div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="card">
+        <h2>Velocidades, em unidades de c</h2>
+        <div class="ctrl" data-parameter="wagon">
+          <label for="wagonValue"><span>Vagão em relação à plataforma, <i class="v">v</i></span>
+            <span class="numf"><input id="wagonValue" type="text" inputmode="decimal" value="0,6" autocomplete="off" spellcheck="false" aria-describedby="wagonError" /><span aria-hidden="true">c</span></span></label>
+          <input type="range" min="-0.99" max="0.99" step="0.01" value="0.6" aria-label="Velocidade do vagão em unidades de c" />
+          <div class="presets" role="group" aria-label="Valores de v">
+            <button type="button" data-val="-0.6">−0,6</button><button type="button" data-val="0.1">0,1</button><button type="button" data-val="0.3">0,3</button>
+            <button type="button" data-val="0.6">0,6</button><button type="button" data-val="0.9">0,9</button>
+          </div>
+          <span class="warn" id="wagonError" role="alert" hidden></span>
+        </div>
+        <div class="ctrl" data-parameter="object">
+          <label for="objectValue"><span>Objeto em relação ao vagão, <i class="v">u</i>′</span>
+            <span class="numf"><input id="objectValue" type="text" inputmode="decimal" value="0,6" autocomplete="off" spellcheck="false" aria-describedby="objectError" /><span aria-hidden="true">c</span></span></label>
+          <input type="range" min="-1" max="1" step="0.01" value="0.6" aria-label="Velocidade do objeto no vagão em unidades de c" />
+          <div class="presets" role="group" aria-label="Valores de u linha">
+            <button type="button" data-val="-0.6">−0,6</button><button type="button" data-val="0.1">0,1</button><button type="button" data-val="0.6">0,6</button>
+            <button type="button" data-val="0.9">0,9</button><button type="button" data-val="1">1 (luz)</button>
+          </div>
+          <span class="warn" id="objectError" role="alert" hidden></span>
+        </div>
+      </div>
+
+      <div class="readout" id="readout">
+        <p class="status" id="status"></p>
+        <dl>
+          <dt>Galileu, u<sub>G</sub></dt><dd id="uG">1,2 c</dd>
+          <dt>Einstein, u</dt><dd id="uE">0,882353 c</dd>
+          <dt>Diferença, u<sub>G</sub> − u</dt><dd id="diff">0,317647 c</dd>
+          <dt>Denominador, 1 + v u′/c²</dt><dd id="den">1,36</dd>
+        </dl>
+        <p class="work">u<sub>G</sub>/c = <span id="subG">0,6 + 0,6</span></p>
+        <p class="work">u/c = <span id="subE">(0,6 + 0,6) ÷ (1 + 0,6 × 0,6)</span></p>
+      </div>
+
+      <p class="note">Valores negativos indicam movimento para a esquerda. As posições estão em segundos-luz e o tempo é o da plataforma. No gráfico, clique ou arraste para escolher u′.</p>
+    </aside>
+  </main>
+
+  <script src="../../catalog.js?v=202611241101"></script>
+  <script src="../../assets/sim.js?v=202611241101"></script>
+  <script>
+  (function () {
+    const { size, watch, line, label, MATH, MONO } = Sim;
+    const DURATION = 10;        // segundos de tempo na plataforma
+    const PLAYBACK_MS = 7000;
+    const LIM = 20;             // segundos-luz, para caber a soma clássica (até 2c)
+    const INK = '#1e1c19', GREY = '#5a6a7a', ORANGE = '#c2610c', BLUE = '#2a6fbf', RED = '#c6302a', GOLD = '#8a6a00', AXIS = '#4a4540';
+    const BAND = 'rgba(240,190,40,0.14)';
+    const coefF = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 12 });
+    const speedF = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 6 });
+    const shortF = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 });
+    const timeF = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    const $ = id => document.getElementById(id);
+    const minus = s => s.replace('-', '−');
+
+    const params = [...document.querySelectorAll('[data-parameter]')].map(el => ({
+      isWagon: el.dataset.parameter === 'wagon',
+      text: el.querySelector('input[type="text"]'), slider: el.querySelector('input[type="range"]'),
+      error: el.querySelector('.warn'), presets: el.querySelector('.presets'), value: 0.6
+    }));
+    const [wagon, object] = params;
+    const views = [...document.querySelectorAll('[data-model]')].map(el => ({
+      relativistic: el.dataset.model === 'relativistic',
+      cv: el.querySelector('canvas'), result: el.querySelector('.result'), beta: 0
+    }));
+    const cvP = $('plot'), geom = {};
+    let elapsed = 0, raf = null, last = null;
+
+    // ───────── física e formatação ─────────
+    const combine = (v, up) => Math.abs(up) === 1 ? up : (v + up) / (1 + v * up);
+    function parseCoefficient(value) {
+      const n = value.trim().replace(/\s*c$/i, '').replace('−', '-').replace(',', '.');
+      return /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(n) ? Number(n) : NaN;
+    }
+    const formatCoefficient = v => minus(coefF.format(v));
+    function speedText(beta, subluminal) {
+      const rounded = minus(speedF.format(beta));
+      // Mantém a distinção entre uma velocidade muito próxima de c e a própria luz.
+      if ((rounded === '1' || rounded === '−1') && subluminal) {
+        const detailed = formatCoefficient(beta);
+        return (detailed === rounded ? '≈ ' : '') + detailed + ' c';
+      }
+      return (rounded === '−0' ? '0' : rounded) + ' c';
+    }
+
+    // ───────── cenas ─────────
+    // Texto sobre um fundo branco translúcido, para continuar legível em cima das linhas.
+    function boxed(c, k, txt, x, y, color, o = {}) {
+      c.save(); c.font = (o.italic ? 'italic ' : '') + (o.size || 13.5 * k) + 'px ' + (o.mono ? MONO : MATH);
+      const w = c.measureText(txt).width, al = o.align || 'center';
+      let x0 = al === 'center' ? x - w / 2 : al === 'right' ? x - w : x;
+      if (o.W) x0 = Math.min(o.W - 8 * k - w, Math.max(8 * k, x0));
+      c.fillStyle = 'rgba(255,255,255,0.85)'; c.fillRect(x0 - 3 * k, y - 9 * k, w + 6 * k, 18 * k);
+      c.fillStyle = color; c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillText(txt, x0, y); c.restore();
+    }
+    function drawScene(view) {
+      const s = size(view.cv); if (!s) return;
+      const { w: W, h: H, k, ctx: c } = s;
+      const t = elapsed, pad = 30 * k, sc = (W - 2 * pad) / (2 * LIM);
+      const x = p => W / 2 + p * sc;
+      const top = 26 * k, axisY = H - 26 * k, span = axisY - top;
+      const yObj = top + span * 0.42, yWag = top + span * 0.8;
+      const color = view.relativistic ? BLUE : ORANGE;
+      c.clearRect(0, 0, W, H); c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+      c.lineCap = 'round';
+
+      if (t > 0) { c.fillStyle = BAND; c.fillRect(x(-t), top, 2 * t * sc, span); }
+      const lblStep = 5 * sc >= 46 * k ? 5 : 10;
+      for (let p = -LIM; p <= LIM; p += 5) {
+        const px = x(p);
+        line(c, px, top, px, axisY, p === 0 ? 'rgba(60,50,45,0.35)' : 'rgba(60,50,45,0.10)', 1);
+        line(c, px, axisY, px, axisY + 5 * k, AXIS, 1);
+        if (p % lblStep === 0) label(c, minus(String(p)), px, axisY + 7 * k, { align: 'center', base: 'top', size: 12 * k, mono: true, color: AXIS });
+      }
+      line(c, 8 * k, axisY, W - 8 * k, axisY, AXIS, 1);
+      line(c, 12 * k, yObj, W - 12 * k, yObj, 'rgba(60,50,45,0.12)', 1);
+      line(c, 12 * k, yWag, W - 12 * k, yWag, 'rgba(60,50,45,0.12)', 1);
+
+      // frentes de luz
+      for (const dir of [-1, 1]) line(c, x(dir * t), top, x(dir * t), axisY, GOLD, 1.5 * k, [5 * k, 5 * k]);
+      if (2 * t * sc < 120 * k) label(c, 'luz: x = ±ct', x(0), 13 * k, { align: 'center', size: 13 * k, color: GOLD });
+      else for (const dir of [-1, 1]) label(c, dir < 0 ? 'luz: x = −ct' : 'luz: x = +ct', x(dir * t), 13 * k, { align: 'center', size: 13 * k, color: GOLD });
+
+      const xw = x(wagon.value * t), xo = x(view.beta * t);
+      const fast = Math.abs(view.beta) > 1 + 1e-12;
+      line(c, x(0), yWag, xw, yWag, GREY, 1.8 * k);
+      line(c, x(0), yObj, xo, yObj, color, 3 * k);
+      // vagão (o ponto de referência é o centro)
+      c.beginPath(); c.roundRect(xw - 18 * k, yWag - 9 * k, 36 * k, 16 * k, 3 * k);
+      c.fillStyle = '#e8eef4'; c.fill(); c.strokeStyle = GREY; c.lineWidth = 1.6 * k; c.stroke();
+      c.fillStyle = GREY;
+      for (const dx of [-10, 10]) { c.beginPath(); c.arc(xw + dx * k, yWag + 9 * k, 3 * k, 0, 2 * Math.PI); c.fill(); }
+      // objeto
+      c.beginPath(); c.arc(xo, yObj, 7 * k, 0, 2 * Math.PI); c.fillStyle = color; c.fill();
+      if (fast && t > 0) { c.beginPath(); c.arc(xo, yObj, 11.5 * k, 0, 2 * Math.PI); c.strokeStyle = RED; c.lineWidth = 2 * k; c.stroke(); }
+      boxed(c, k, 'vagão: ' + speedText(wagon.value, true), xw, yWag - 21 * k, GREY, { W });
+      const sub = view.relativistic ? Math.abs(object.value) < 1 : Math.abs(view.beta) < 1;
+      boxed(c, k, 'objeto: ' + speedText(view.beta, sub) + (fast ? ' (mais rápido que a luz)' : ''), xo, yObj - 22 * k, fast ? RED : color, { W });
+      boxed(c, k, 'x (segundos-luz)', W - 10 * k, axisY - 11 * k, AXIS, { align: 'right', size: 12 * k, mono: true });
+    }
+
+    // ───────── gráfico u(u′) para o v atual ─────────
+    function drawPlot() {
+      const s = size(cvP); if (!s) return;
+      const { w: W, h: H, k, ctx: c } = s;
+      const v = wagon.value, a = object.value;
+      const ml = 46 * k, mr = 16 * k, mt = 14 * k, mb = 44 * k, pw = W - ml - mr, ph = H - mt - mb;
+      geom.ml = ml; geom.pw = pw;
+      const xs = up => ml + (up + 1) / 2 * pw, ys = u => mt + (2 - u) / 4 * ph;
+      c.clearRect(0, 0, W, H); c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+      c.fillStyle = BAND; c.fillRect(ml, ys(1), pw, ys(-1) - ys(1));
+      for (let u = -2; u <= 2; u += 0.5) {
+        line(c, ml, ys(u), ml + pw, ys(u), 'rgba(60,50,45,0.10)', 1);
+        if (Number.isInteger(u)) label(c, minus(String(u)), ml - 7 * k, ys(u), { align: 'right', size: 12 * k, mono: true, color: AXIS });
+      }
+      for (let up = -1; up <= 1; up += 0.5) {
+        line(c, xs(up), mt, xs(up), mt + ph, 'rgba(60,50,45,0.10)', 1);
+        line(c, xs(up), mt + ph, xs(up), mt + ph + 5 * k, AXIS, 1);
+        label(c, formatCoefficient(up), xs(up), mt + ph + 7 * k, { align: 'center', base: 'top', size: 12 * k, mono: true, color: AXIS });
+      }
+      c.strokeStyle = AXIS; c.lineWidth = 1; c.strokeRect(ml + 0.5, mt + 0.5, pw - 1, ph - 1);
+      line(c, ml, ys(0), ml + pw, ys(0), AXIS, 1); line(c, xs(0), mt, xs(0), mt + ph, AXIS, 1);
+      for (const sg of [-1, 1]) line(c, ml, ys(sg), ml + pw, ys(sg), GOLD, 1.4 * k, [5 * k, 5 * k]);
+      label(c, 'u = c', ml + 8 * k, ys(1) - 10 * k, { italic: true, size: 14 * k, color: GOLD });
+      label(c, 'u = −c', ml + pw - 8 * k, ys(-1) + 11 * k, { italic: true, size: 14 * k, color: GOLD, align: 'right' });
+      label(c, 'u/c', ml + 8 * k, mt + 13 * k, { italic: true, size: 15 * k, color: AXIS });
+      label(c, 'u′/c', ml + pw / 2, mt + ph + 31 * k, { italic: true, size: 15 * k, color: AXIS, align: 'center' });
+
+      line(c, xs(-1), ys(v - 1), xs(1), ys(v + 1), ORANGE, 2.4 * k);                   // Galileu
+      c.beginPath();                                                                    // Einstein
+      for (let i = 0; i <= 300; i++) { const up = -1 + 2 * i / 300, px = xs(up), py = ys((v + up) / (1 + v * up)); i ? c.lineTo(px, py) : c.moveTo(px, py); }
+      c.strokeStyle = BLUE; c.lineWidth = 2.6 * k; c.lineJoin = 'round'; c.stroke();
+
+      // ponto atual
+      const uG = v + a, uE = combine(v, a), px = xs(a);
+      line(c, px, mt, px, mt + ph, INK, 1.1 * k, [4 * k, 4 * k]);
+      const dot = (u, col) => { c.beginPath(); c.arc(px, ys(u), 5.5 * k, 0, 2 * Math.PI); c.fillStyle = '#fff'; c.fill(); c.lineWidth = 2.4 * k; c.strokeStyle = col; c.stroke(); };
+      dot(uG, ORANGE); dot(uE, BLUE);
+      // O rótulo do ponto de cima fica acima e à esquerda; o do ponto de baixo, abaixo e à direita (longe das curvas).
+      const gUp = uG >= uE, room = xs(1) - px > 62 * k;
+      const put = (u, col, up) => boxed(c, k, minus(shortF.format(u)), px + (up || !room ? -10 : 10) * k, ys(u) + (up ? -13 : 14) * k, col,
+        { size: 13 * k, mono: true, align: up || !room ? 'right' : 'left' });
+      put(uG, Math.abs(uG) > 1 + 1e-12 ? RED : ORANGE, gUp); put(uE, BLUE, !gUp);
+    }
+
+    const render = () => { views.forEach(drawScene); drawPlot(); };
+
+    // ───────── textos ─────────
+    function updateText() {
+      const v = wagon.value, a = object.value, uG = v + a, uE = combine(v, a);
+      const left = formatCoefficient(v), right = a < 0 ? '(' + formatCoefficient(a) + ')' : formatCoefficient(a);
+      const light = Math.abs(a) === 1, over = Math.abs(uG) > 1 + 1e-12;
+      views[0].beta = uG; views[1].beta = uE;
+      const tG = speedText(uG, Math.abs(uG) < 1), tE = speedText(uE, !light);
+      views[0].result.textContent = tG; views[0].result.classList.toggle('over', over);
+      views[1].result.textContent = tE;
+      $('uG').textContent = tG; $('uE').textContent = tE;
+      $('diff').textContent = speedText(uG - uE, true);
+      $('den').textContent = formatCoefficient(Math.round((1 + v * a) * 1e8) / 1e8);
+      $('subG').textContent = left + ' + ' + right;
+      $('subE').textContent = '(' + left + ' + ' + right + ') ÷ (1 + ' + left + ' × ' + right + ')';
+      $('status').textContent = light ? 'A luz tem velocidade c também na plataforma.'
+        : over ? 'Galileu prevê mais que c; Einstein, não.'
+        : Math.abs(uG - uE) < 0.005 ? 'Em baixas velocidades, as duas previsões quase coincidem.'
+        : 'As previsões diferem; as duas ficam abaixo de c.';
+      $('readout').style.background = over ? '#fdf1ef' : '#fff';
+      for (const p of params) p.presets.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.val === p.value)));
+      $('timeline').value = String(elapsed === DURATION ? 1000 : Math.min(999, Math.round(elapsed * 1000 / DURATION)));
+      const time = timeF.format(elapsed);
+      $('timelineOut').textContent = 't = ' + time + ' s';
+      $('timeline').setAttribute('aria-valuetext', time + ' segundos na plataforma');
+    }
+    const update = () => { updateText(); render(); };
+
+    // ───────── controles ─────────
+    function setError(p, message) {
+      p.error.textContent = message; p.error.hidden = !message;
+      p.text.setAttribute('aria-invalid', String(Boolean(message)));
+    }
+    function setParam(p, value, from) {
+      p.value = value;
+      if (from !== 'text') p.text.value = formatCoefficient(value);
+      if (from !== 'slider') p.slider.value = String(value);
+      p.slider.setAttribute('aria-valuetext', formatCoefficient(value) + ' vezes a velocidade da luz');
+      setError(p, ''); update();
+    }
+    for (const p of params) {
+      p.slider.addEventListener('input', () => setParam(p, Number(p.slider.value), 'slider'));
+      p.text.addEventListener('input', () => {
+        const value = parseCoefficient(p.text.value);
+        const out = p.isWagon ? Math.abs(value) >= 1 : Math.abs(value) > 1;
+        if (!Number.isFinite(value) || out) {
+          setError(p, p.isWagon ? 'Use um número entre −1 e +1, sem incluir os extremos.' : 'Use um número entre −1 e +1, incluindo os extremos.');
+          return;
+        }
+        setParam(p, value, 'text');
+      });
+      p.text.addEventListener('blur', () => { if (p.error.hidden) p.text.value = formatCoefficient(p.value); });
+      p.presets.addEventListener('click', e => { const b = e.target.closest('button[data-val]'); if (b) setParam(p, +b.dataset.val, 'preset'); });
+    }
+    const pick = e => {
+      if (e.type === 'pointermove' && !(e.buttons & 1)) return; if (!geom.pw) return;
+      const f = Math.min(1, Math.max(0, (e.clientX - cvP.getBoundingClientRect().left - geom.ml) / geom.pw));
+      setParam(object, Math.round((2 * f - 1) * 100) / 100, 'plot');
+    };
+    cvP.addEventListener('pointerdown', pick); cvP.addEventListener('pointermove', pick);
+
+    // ───────── reprodução ─────────
+    function stop() {
+      if (raf !== null) cancelAnimationFrame(raf);
+      raf = null; last = null;
+      $('play').textContent = elapsed === DURATION ? '↻ Repetir' : '▶ Reproduzir';
+    }
+    function tick(ts) {
+      if (last !== null) elapsed = Math.min(DURATION, elapsed + (ts - last) * DURATION / PLAYBACK_MS);
+      if (elapsed >= DURATION) { stop(); update(); return; }
+      last = ts; update(); raf = requestAnimationFrame(tick);
+    }
+    $('play').addEventListener('click', () => {
+      if (raf !== null) { stop(); return; }
+      if (elapsed === DURATION) elapsed = 0;
+      $('play').textContent = '❚❚ Pausar';
+      raf = requestAnimationFrame(tick);
+    });
+    $('reset').addEventListener('click', () => { elapsed = 0; stop(); update(); });
+    $('timeline').addEventListener('input', e => { elapsed = +e.target.value / 1000 * DURATION; stop(); update(); });
+
+    watch(render); update();
+  })();
+  </script>
+</body>
+</html>

@@ -19,7 +19,8 @@ teaching/
     dispersao-e-resolucao.html
     lei-de-bragg.html
   fisica-iv/relatividade/
-    relogio-de-luz.html             keeps its own page layout; uses only the shared top bar
+    relogio-de-luz.html
+    adicao-de-velocidades.html
 ```
 
 To add a simulation, create `teaching/<course-id>/<topic-id>/<slug>.html` (copy an existing page as a
@@ -29,6 +30,6 @@ topic, add it to `topics` in the same file.
 
 To preview locally, run `python3 -m http.server` in the repository root and open `http://localhost:8000`.
 
-Stylesheets and scripts are linked with a version suffix (`styles.css?v=202611240805`). Browsers cache these
+Stylesheets and scripts are linked with a version suffix (`styles.css?v=202611241101`). Browsers cache these
 files, so after editing `styles.css`, `teaching/catalog.js` or anything in `teaching/assets/`, change that
 number in `index.html` and in the simulation pages; otherwise returning visitors keep the old file for a while.

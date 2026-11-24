@@ -1,531 +1,355 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
-  <meta name="description" content="Simulação de um relógio de luz visto do vagão e da plataforma.">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Relógio de luz em dois referenciais · Física IV · Prof. Alexandre Bonatto</title>
-  <link rel="stylesheet" href="../../assets/sim.css?v=202611240805">
+  <meta name="description" content="Simulação de um relógio de luz visto do vagão e da plataforma: dilatação do tempo, Δt = γΔt′, e contração do comprimento, L = L₀/γ." />
+  <link rel="stylesheet" href="../../assets/sim.css?v=202611241101" />
   <style>
-    :root {
-      color-scheme: light;
-      --paper: #f7f7f1;
-      --white: #fffefa;
-      --ink: #132f38;
-      --muted: #52666a;
-      --line: #d5dfdb;
-      --teal: #075d59;
-      --teal-light: #e2efea;
-      --amber: #8f4b13;
-      --navy: #112b37;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: var(--paper);
-      color: var(--ink);
-    }
-    * { box-sizing: border-box; }
-    html { height: auto; font-size: calc(16px * var(--zoom, 1)); }
-    body { margin: 0; display: block; height: auto; overflow: visible; background: var(--paper); color: var(--ink); font-family: inherit; line-height: normal; }
-    button, input { font: inherit; }
-    button { cursor: pointer; }
-    button:focus-visible, input:focus-visible {
-      outline: 3px solid #26877b;
-      outline-offset: 3px;
-    }
-    main { width: min(1120px, calc(100% - 48px)); margin: 0 auto; padding: 42px 0 34px; }
-    h1 { font-size: clamp(2rem, 4.2vw, 3.5rem); letter-spacing: -.055em; line-height: 1.04; margin: 0; }
-    h2 { font-size: 1.2rem; letter-spacing: -.025em; margin: 0; }
-    .intro { color: var(--muted); margin: 10px 0 24px; line-height: 1.5; }
-    .settings { display: grid; grid-template-columns: auto minmax(200px, 350px) auto; align-items: end; gap: 24px; }
-    fieldset { min-width: 0; padding: 0; border: 0; margin: 0; }
-    legend, .field-label, .metric-label { font-size: .82rem; font-weight: 650; color: var(--muted); }
-    legend { padding: 0; margin-bottom: 6px; }
-    .segmented { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 3px; background: var(--white); }
-    .segmented button { background: transparent; border: 0; border-radius: 5px; padding: 7px 14px; color: var(--ink); font-weight: 600; }
-    .segmented button[aria-pressed="true"] { background: var(--teal-light); color: var(--teal); }
-    .field-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
-    .field-top output, .lorentz output { font-variant-numeric: tabular-nums; font-weight: 700; }
-    input[type="range"] { display: block; width: 100%; min-height: 30px; margin: 0; accent-color: var(--teal); cursor: ew-resize; }
-    .lorentz { align-self: end; justify-self: start; padding: 0 0 7px 17px; border-left: 1px solid var(--line); white-space: nowrap; }
-    .lorentz output { display: block; font-size: 1.14rem; }
-    .views { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 22px; }
-    .view { display: block; background: var(--white); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-    .view-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 17px; }
-    .camera { color: var(--muted); font-size: .83rem; margin: 2px 0 0; }
-    .phase { color: var(--teal); font-weight: 650; font-size: .83rem; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-    .phase::before { content: ""; width: 8px; height: 8px; border: 2px solid currentColor; border-radius: 50%; }
-    .phase[data-stage="ida"]::before, .phase[data-stage="volta"]::before { background: currentColor; }
-    .phase[data-stage="volta"], .phase[data-stage="reflexao"] { color: var(--amber); }
-    .phase[data-stage="deteccao"]::before { border-radius: 2px; background: currentColor; }
-    .scene { display: block; width: 100%; height: 14.625rem; background: var(--navy); }
-    .readouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: 12px 17px 13px; gap: 12px; }
-    .readouts dd { margin: 4px 0 0; font-size: 1.18rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .readouts dt { line-height: 1.25; }
-    .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 19px; margin: 11px 0 0; color: var(--muted); font-size: .82rem; padding: 0; list-style: none; }
-    .legend li { display: flex; gap: 6px; align-items: center; }
-    .legend .mark { display: inline-block; width: 11px; height: 11px; flex: 0 0 11px; }
-    .mark.pulse { border-radius: 50%; background: var(--teal); }
-    .mark.source { border: 2px solid var(--muted); border-radius: 2px; }
-    .mark.mirror { border-top: 2px solid var(--muted); border-bottom: 2px solid var(--muted); height: 7px; }
-    .mark.route { width: 15px; flex-basis: 15px; height: 0; border-top: 2px dashed var(--muted); }
-    .playback { border-top: 1px solid var(--line); margin-top: 19px; padding-top: 14px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 22px; align-items: center; }
-    .actions { display: flex; gap: 7px; }
-    .action { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 6px 13px; border-radius: 7px; border: 1px solid var(--line); background: var(--white); color: var(--ink); font-weight: 650; }
-    .action:hover { background: var(--teal-light); }
-    .action.primary { background: var(--teal); color: white; border-color: var(--teal); min-width: 106px; }
-    .action.primary:hover { background: #064b48; }
-    .time-bounds { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: .76rem; }
-    .explanation { margin: 11px 0 0; color: var(--muted); font-size: .84rem; line-height: 1.5; }
-    .screen-reader { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-    @media (max-width: 720px) {
-      main { width: calc(100% - 32px); padding: 26px 0; }
-      .intro { margin-bottom: 18px; }
-      .settings { grid-template-columns: 1fr auto; gap: 12px; }
-      .speed { grid-column: 1; grid-row: 2; }
-      .lorentz { grid-column: 2; grid-row: 2; padding-left: 11px; }
-      .views { grid-template-columns: 1fr; margin-top: 14px; gap: 12px; }
-      .scene { height: 12rem; }
-      .view-head, .readouts { padding-left: 12px; padding-right: 12px; }
-      .readouts dd { font-size: 1.05rem; }
-      .playback { grid-template-columns: 1fr; gap: 10px; }
-    }
-    @media (pointer: coarse) {
-      .action, .segmented button { min-height: 44px; }
-      input[type="range"] { min-height: 38px; }
-    }
+    .metrics { display: flex; flex-wrap: wrap; gap: .1rem 1.2rem; margin-left: auto; }
+    .metrics span { display: inline-flex; align-items: baseline; gap: .45rem; font-size: .85rem; color: var(--muted); }
+    .metrics b { font-family: var(--mono); font-size: 1.05rem; font-weight: 600; color: #1e1c19; font-variant-numeric: tabular-nums; min-width: 4.4em; text-align: right; white-space: nowrap; }
+    .phase { font-size: .85rem; font-weight: 600; min-width: 7.2em; text-align: center; padding: .08rem .6rem; border-radius: 999px; border: 1.5px solid currentColor; color: var(--muted); white-space: nowrap; }
+    .phase[data-stage="ida"] { color: var(--w1); }
+    .phase[data-stage="reflexao"], .phase[data-stage="volta"] { color: var(--hot); }
+    .phase[data-stage="deteccao"] { color: #fff; background: var(--green); border-color: var(--green); }
+    .legend .lout { color: var(--w1); } .legend .lback { color: var(--hot); }
+    .formulas { display: grid; gap: .5rem; justify-items: start; }
+    .formulas .eq { font-size: 1.2rem; gap: .6rem; }
+    .formulas small { font-family: var(--ui); font-size: .8rem; color: var(--muted); }
+    @media (min-width: 901px) and (max-width: 1400px) { .head .sub { display: none; } }   /* cabeçalho em uma linha só */
+    .rad { border-top: 1.2px solid currentColor; padding: .06em .12em 0 .1em; }
   </style>
 </head>
 <body data-course="fisica-iv" data-topic="relatividade" data-sim="relogio-de-luz">
-  <main>
-    <header>
-      <h1>Relógio de luz em dois referenciais</h1>
-      <p class="intro">Um pulso sai do emissor, reflete no espelho e volta ao detector.</p>
-    </header>
 
-    <div class="settings">
-      <fieldset>
-        <legend>Orientação do relógio</legend>
-        <div class="segmented">
-          <button type="button" data-orientation="vertical" aria-pressed="true">Vertical</button>
-          <button type="button" data-orientation="horizontal" aria-pressed="false">Horizontal</button>
-        </div>
-      </fieldset>
-      <div class="speed">
-        <div class="field-top">
-          <label class="field-label" for="speed">Velocidade do vagão</label>
-          <output id="speed-value" for="speed">0,60 c</output>
-        </div>
-        <input id="speed" type="range" min="0" max="0.9" step="0.01" value="0.6">
-      </div>
-      <div class="lorentz">
-        <span class="metric-label">Fator de Lorentz</span>
-        <output id="lorentz" aria-label="Fator de Lorentz γ">γ = 1,25</output>
-      </div>
-    </div>
+  <main class="stage">
+    <h1 class="sr-only">Relógio de luz em dois referenciais</h1>
 
-    <div class="views">
-      <section class="view" data-view="train" aria-labelledby="train-title">
-        <header class="view-head">
-          <div>
-            <h2 id="train-title">Vagão <span aria-label="S linha">S′</span></h2>
-            <p class="camera">Câmera acompanha o vagão</p>
+    <section class="view">
+      <div class="legend">
+        <span class="lout"><i></i> ida</span>
+        <span class="lback"><i></i> volta</span>
+        <span class="dash"><i></i> trajeto completo do pulso</span>
+        <span>as duas cenas usam a mesma escala de distância</span>
+      </div>
+
+      <div class="sheet grow" data-view="train">
+        <div class="head">
+          <h2 class="ttl" id="trainTitle">Vagão S′</h2>
+          <span class="sub">a câmera acompanha o vagão</span>
+          <div class="metrics">
+            <span>Tempo <b data-reading="time">0,0 ns</b></span>
+            <span>Percurso da luz <b data-reading="distance">0,0 m</b></span>
+            <span>Comprimento <b data-reading="length">12,0 m</b></span>
           </div>
           <span class="phase" data-stage="emissao">Emissão</span>
-        </header>
-        <canvas class="scene" role="img" aria-label="Trajetória do pulso e posição do vagão na câmera que o acompanha. O eixo horizontal mede a posição em metros."></canvas>
-        <dl class="readouts">
-          <div><dt class="metric-label">Tempo do pulso</dt><dd data-reading="time">0,0 ns</dd></div>
-          <div><dt class="metric-label">Percurso da luz</dt><dd data-reading="distance">0,0 m</dd></div>
-          <div><dt class="metric-label">Comprimento do vagão</dt><dd data-reading="length">12,0 m</dd></div>
-        </dl>
-      </section>
+        </div>
+        <div class="cv"><canvas aria-label="Trajetória do pulso de luz no referencial do vagão. O eixo horizontal mede a posição em metros."></canvas></div>
+      </div>
 
-      <section class="view" data-view="platform" aria-labelledby="platform-title">
-        <header class="view-head">
-          <div>
-            <h2 id="platform-title">Plataforma <span aria-label="S">S</span></h2>
-            <p class="camera">Câmera fixa nos trilhos</p>
+      <div class="sheet grow" data-view="platform">
+        <div class="head">
+          <h2 class="ttl" id="platformTitle">Plataforma S</h2>
+          <span class="sub">a câmera está fixa nos trilhos</span>
+          <div class="metrics">
+            <span>Tempo <b data-reading="time">0,0 ns</b></span>
+            <span>Percurso da luz <b data-reading="distance">0,0 m</b></span>
+            <span>Comprimento <b data-reading="length">9,6 m</b></span>
           </div>
           <span class="phase" data-stage="emissao">Emissão</span>
-        </header>
-        <canvas class="scene" role="img" aria-label="Trajetória do pulso e posição do vagão na câmera fixa na plataforma. O eixo horizontal mede a posição em metros."></canvas>
-        <dl class="readouts">
-          <div><dt class="metric-label">Tempo do pulso</dt><dd data-reading="time">0,0 ns</dd></div>
-          <div><dt class="metric-label">Percurso da luz</dt><dd data-reading="distance">0,0 m</dd></div>
-          <div><dt class="metric-label">Comprimento do vagão</dt><dd data-reading="length">9,6 m</dd></div>
-        </dl>
-      </section>
-    </div>
-
-    <ul class="legend" aria-label="Legenda">
-      <li><span class="mark pulse" aria-hidden="true"></span>Pulso de luz</li>
-      <li><span class="mark source" aria-hidden="true"></span>Emissor e detector</li>
-      <li><span class="mark mirror" aria-hidden="true"></span>Espelho</li>
-      <li><span class="mark route" aria-hidden="true"></span>Trajeto completo</li>
-    </ul>
-
-    <div class="playback">
-      <div class="actions">
-        <button type="button" class="action primary" id="play">Reproduzir</button>
-        <button type="button" class="action" id="reset">Reiniciar</button>
-      </div>
-      <div>
-        <div class="field-top">
-          <label class="field-label" for="timeline">Tempo desde a emissão</label>
-          <output id="timeline-value" for="timeline" aria-live="off">0,0 ns</output>
         </div>
-        <input id="timeline" type="range" min="0" max="1000" step="1" value="0" aria-describedby="timing">
-        <div class="time-bounds"><span>Emissão</span><span>Última detecção</span></div>
+        <div class="cv"><canvas aria-label="Trajetória do pulso de luz e posição do vagão no referencial da plataforma. O eixo horizontal mede a posição em metros."></canvas></div>
       </div>
-    </div>
-    <p class="explanation" id="timing">As duas cenas usam a mesma escala de distância e avançam no mesmo ritmo. Cada contador para na detecção, no tempo medido em seu referencial.</p>
-    <p class="screen-reader" id="announcement" role="status"></p>
-    <noscript><p>Ative o JavaScript para rodar a simulação.</p></noscript>
+
+      <div class="sheet transport">
+        <button type="button" class="btn primary" id="play">▶ Reproduzir</button>
+        <button type="button" class="btn" id="reset">Reiniciar</button>
+        <div class="tl">
+          <label for="timeline"><span>Tempo desde a emissão</span><output id="timelineOut" for="timeline">0,0 ns</output></label>
+          <input type="range" id="timeline" min="0" max="1000" step="1" value="0" />
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="card">
+        <h2>Relógio de luz</h2>
+        <div class="ctrl">
+          <div class="presets" id="orient" role="group" aria-label="Orientação do relógio">
+            <span class="lbl">orientação</span>
+            <button type="button" data-orientation="vertical" aria-pressed="true">vertical</button>
+            <button type="button" data-orientation="horizontal" aria-pressed="false">horizontal</button>
+          </div>
+        </div>
+        <div class="ctrl">
+          <label for="speed"><span>Velocidade do vagão, v</span><output id="speedOut" for="speed">0,60 c</output></label>
+          <input type="range" id="speed" min="0" max="0.9" step="0.01" value="0.6" />
+          <div class="presets" id="vBtns" role="group" aria-label="Valores de v em unidades de c">
+            <button type="button" data-b="0">0</button><button type="button" data-b="0.3">0,3</button><button type="button" data-b="0.6">0,6</button>
+            <button type="button" data-b="0.8">0,8</button><button type="button" data-b="0.9">0,9</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="readout" id="readout">
+        <p class="status" id="status">γ = 1,25</p>
+        <dl>
+          <dt>Ida e volta no vagão, Δt′</dt><dd id="dtTrain">40,0 ns</dd>
+          <dt>Ida e volta na plataforma, Δt</dt><dd id="dtPlat">50,0 ns</dd>
+          <dt>Razão Δt / Δt′</dt><dd id="ratio">1,25</dd>
+          <dt>Comprimento próprio, L₀</dt><dd id="len0">12,0 m</dd>
+          <dt>Comprimento na plataforma, L</dt><dd id="len">9,6 m</dd>
+        </dl>
+      </div>
+
+      <div class="card formulas">
+        <h2>Fórmulas</h2>
+        <div class="eq"><span><span class="v">γ</span> =</span><span class="frac"><span class="num">1</span><span class="den">√<span class="rad">1 − <span class="v">v</span><sup>2</sup>/<span class="v">c</span><sup>2</sup></span></span></span></div>
+        <div class="eq"><span>Δ<span class="v">t</span> = <span class="v">γ</span> Δ<span class="v">t</span>′</span><small>dilatação do tempo</small></div>
+        <div class="eq"><span><span class="v">L</span> = <span class="v">L</span><sub>0</sub> / <span class="v">γ</span></span><small>contração do comprimento</small></div>
+      </div>
+
+      <p class="note" id="note"></p>
+      <p class="sr-only" id="announcement" role="status"></p>
+    </aside>
   </main>
 
-  <script src="../../catalog.js?v=202611240805"></script>
-  <script src="../../assets/sim.js?v=202611240805"></script>
+  <script src="../../catalog.js?v=202611241101"></script>
+  <script src="../../assets/sim.js?v=202611241101"></script>
   <script>
-    "use strict";
-
+  (function () {
+    const { fmt, size, watch, line, arrowHead, label } = Sim;
     // Distâncias em metros e tempos em nanossegundos.
-    const C = 0.299792458;
-    const REST_LENGTH = 12;
-    const HEIGHT = 6;
-    const PLAYBACK_MS = 6800;
-    const number = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-    const decimal = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const C = 0.299792458, L0 = 12, HGT = 6, PLAYBACK_MS = 6800;
+    const INK = '#1e1c19', GREY = '#5a6a7a', NAVY = '#1a3a5c', BLUE = '#2a6fbf', RED = '#c6302a', GREEN = '#1f8f5f', AXIS = '#4a4540';
+    const STAGES = { emissao: 'Emissão', ida: 'Ida', reflexao: 'Reflexão', volta: 'Volta', deteccao: 'Detectado' };
+    const NOTES = {
+      vertical: 'Relógio vertical: emissor no piso, espelho no teto, a 6 m. Na plataforma a luz percorre uma diagonal mais longa com a mesma velocidade c, então leva mais tempo. Cada cena avança no tempo do próprio referencial e para na detecção.',
+      horizontal: 'Relógio horizontal: emissor na traseira, espelho na dianteira. Para o tempo de ida e volta na plataforma ser γΔt′, como no relógio vertical, o vagão precisa medir L₀/γ. Cada cena avança no tempo do próprio referencial e para na detecção.'
+    };
+    const $ = id => document.getElementById(id);
+    const state = { vertical: true, beta: 0.6, elapsed: 0 };
+    const views = [...document.querySelectorAll('[data-view]')].map(el => ({
+      cv: el.querySelector('canvas'), phase: el.querySelector('.phase'),
+      time: el.querySelector('[data-reading="time"]'), distance: el.querySelector('[data-reading="distance"]'),
+      length: el.querySelector('[data-reading="length"]')
+    }));
+    let frames, limits, duration = 0, raf = null, last = null;
 
+    // ───────── física ─────────
     function makeFrame(beta, vertical) {
-      const gamma = 1 / Math.sqrt(1 - beta ** 2);
-      const velocity = beta * C;
-      const length = REST_LENGTH / gamma;
-      const rearOffset = vertical ? -length / 2 : 0;
-      const outwardTime = vertical ? HEIGHT * gamma / C : length / (C - velocity);
+      const gamma = 1 / Math.sqrt(1 - beta * beta), velocity = beta * C, length = L0 / gamma;
+      const rearOffset = vertical ? -length / 2 : 0;          // posição da traseira em relação ao emissor
+      const outwardTime = vertical ? HGT * gamma / C : length / (C - velocity);
       const inwardTime = vertical ? outwardTime : length / (C + velocity);
-      const duration = outwardTime + inwardTime;
-      const emission = { x: 0, y: vertical ? 0 : HEIGHT / 2 };
-      const reflection = {
-        x: velocity * outwardTime + (vertical ? 0 : length),
-        y: vertical ? HEIGHT : emission.y,
-      };
-      const detection = { x: velocity * duration, y: emission.y };
-      return { gamma, velocity, length, rearOffset, outwardTime, inwardTime, duration, emission, reflection, detection };
+      const total = outwardTime + inwardTime;
+      const emission = { x: 0, y: vertical ? 0 : HGT / 2 };
+      const reflection = { x: velocity * outwardTime + (vertical ? 0 : length), y: vertical ? HGT : emission.y };
+      const detection = { x: velocity * total, y: emission.y };
+      return { gamma, velocity, length, rearOffset, outwardTime, inwardTime, duration: total, emission, reflection, detection };
     }
-
     function pulseAt(frame, time) {
-      const returning = time > frame.outwardTime;
-      const from = returning ? frame.reflection : frame.emission;
-      const to = returning ? frame.detection : frame.reflection;
-      const fraction = returning
-        ? (time - frame.outwardTime) / frame.inwardTime
-        : time / frame.outwardTime;
-      return {
-        x: from.x + (to.x - from.x) * fraction,
-        y: from.y + (to.y - from.y) * fraction,
-      };
+      const back = time > frame.outwardTime;
+      const from = back ? frame.reflection : frame.emission, to = back ? frame.detection : frame.reflection;
+      const f = back ? (time - frame.outwardTime) / frame.inwardTime : time / frame.outwardTime;
+      return { x: from.x + (to.x - from.x) * f, y: from.y + (to.y - from.y) * f };
     }
-
-    const byId = (id) => document.getElementById(id);
-    const speed = byId("speed");
-    const timeline = byId("timeline");
-    const play = byId("play");
-    const orientationButtons = [...document.querySelectorAll("[data-orientation]")];
-    const views = [...document.querySelectorAll("[data-view]")].map((element) => {
-      const canvas = element.querySelector("canvas");
-      return {
-        canvas,
-        context: canvas.getContext("2d"),
-        phase: element.querySelector(".phase"),
-        time: element.querySelector('[data-reading="time"]'),
-        distance: element.querySelector('[data-reading="distance"]'),
-        length: element.querySelector('[data-reading="length"]'),
-        width: 0,
-        height: 0,
-      };
-    });
-
-    const colors = {
-      grid: "#294552",
-      axis: "#7795a0",
-      axisText: "#bdcfd3",
-      carFill: "rgba(46, 79, 90, .73)",
-      carLine: "#82a1a9",
-      carDetail: "#577783",
-      hardware: "#e1eded",
-      planned: "#91a9af",
-      light: "#7ef0d7",
-      returnTrail: "#ffc78b",
-    };
-    const stages = {
-      emissao: "Emissão",
-      ida: "Em propagação",
-      reflexao: "Reflexão",
-      volta: "Retorno",
-      deteccao: "Detectado",
-    };
-    let vertical = true;
-    let frames;
-    let duration = 0;
-    let limits;
-    let elapsed = 0;
-    let animation = null;
-    let previousTimestamp = null;
-
-    function configureScene() {
-      frames = [makeFrame(0, vertical), makeFrame(Number(speed.value), vertical)];
-      const [train, platform] = frames;
-      duration = platform.duration;
-      limits = {
-        left: Math.min(train.rearOffset, platform.rearOffset),
-        right: Math.max(train.rearOffset + train.length, platform.detection.x + platform.rearOffset + platform.length, platform.reflection.x),
-      };
-      byId("speed-value").textContent = decimal.format(Number(speed.value)) + " c";
-      speed.setAttribute("aria-valuetext", decimal.format(Number(speed.value)) + " vezes a velocidade da luz");
-      byId("lorentz").textContent = "γ = " + decimal.format(platform.gamma);
-    }
-
-    function stroke(context, points, color, width = 1, dash = []) {
-      context.beginPath();
-      context.moveTo(points[0][0], points[0][1]);
-      for (const point of points.slice(1)) context.lineTo(point[0], point[1]);
-      context.strokeStyle = color;
-      context.lineWidth = width;
-      context.setLineDash(dash);
-      context.stroke();
-      context.setLineDash([]);
-    }
-
-    function circle(context, x, y, radius, fill, outline) {
-      context.beginPath();
-      context.arc(x, y, radius, 0, Math.PI * 2);
-      if (fill) {
-        context.fillStyle = fill;
-        context.fill();
-      }
-      if (outline) {
-        context.strokeStyle = outline;
-        context.lineWidth = 1.5;
-        context.stroke();
-      }
-    }
-
-    function drawAxis(context, width, height, x, scale) {
-      const axisY = height - 31;
-      const interval = scale >= 7 ? 5 : 10;
-      const minTick = Math.ceil((17 - x(0)) / (scale * interval));
-      const maxTick = Math.floor((width - 46 - x(0)) / (scale * interval));
-      for (let tick = minTick; tick <= maxTick; tick++) {
-        const position = x(tick * interval);
-        stroke(context, [[position, 15], [position, axisY - 5]], colors.grid);
-        stroke(context, [[position, axisY - 3], [position, axisY + 4]], colors.axis);
-        context.fillStyle = colors.axisText;
-        context.font = "11px system-ui, sans-serif";
-        context.textAlign = "center";
-        context.fillText(String(tick * interval), position, axisY + 18);
-      }
-      stroke(context, [[16, axisY], [width - 18, axisY]], colors.axis);
-      stroke(context, [[width - 22, axisY - 3], [width - 18, axisY], [width - 22, axisY + 3]], colors.axis);
-      context.fillStyle = colors.axisText;
-      context.textAlign = "right";
-      context.font = "11px system-ui, sans-serif";
-      context.fillText("x (m)", width - 16, axisY + 18);
-    }
-
-    function drawCar(context, x, y, scale, frame, movement) {
-      const rear = x(frame.rearOffset + movement);
-      const front = rear + frame.length * scale;
-      const width = front - rear;
-      const top = y(HEIGHT);
-      const floor = y(0);
-      context.beginPath();
-      context.roundRect(rear, top, width, floor - top, Math.min(5, width / 6));
-      context.fillStyle = colors.carFill;
-      context.strokeStyle = colors.carLine;
-      context.lineWidth = 1.5;
-      context.fill();
-      context.stroke();
-      stroke(context, [[rear + 3, floor - 5], [front - 3, floor - 5]], colors.carDetail);
-      for (const fraction of [.21, .79]) {
-        const wheel = rear + fraction * width;
-        context.beginPath();
-        context.ellipse(wheel, floor + 5, Math.min(5 / frame.gamma, width / 12), 5, 0, 0, Math.PI * 2);
-        context.fillStyle = colors.carDetail;
-        context.fill();
-        circle(context, wheel, floor + 5, 1.25, colors.carLine);
-      }
-    }
-
-    function drawHardware(context, detector, mirror, detected) {
-      context.fillStyle = detected ? colors.light : "#192f39";
-      context.fillRect(detector[0] - 4, detector[1] - 4, 8, 8);
-      context.strokeStyle = colors.hardware;
-      context.lineWidth = 1.4;
-      context.strokeRect(detector[0] - 4, detector[1] - 4, 8, 8);
-      for (const shift of [-1.5, 1.5]) {
-        const [mx, my] = mirror;
-        const ends = vertical
-          ? [[mx - 8, my + shift], [mx + 8, my + shift]]
-          : [[mx + shift, my - 8], [mx + shift, my + 8]];
-        stroke(context, ends, colors.hardware, 1.3);
-      }
-    }
-
-    function draw(view, frame, stage, time, scale) {
-      const { context, width, height } = view;
-      if (!width || !height || !context) return;
-      const midpoint = (limits.left + limits.right) / 2;
-      const x = (position) => width / 2 + (position - midpoint) * scale;
-      const y = (position) => height - 56 - position * scale;
-      const screen = (point) => [x(point.x), y(point.y)];
-      const detected = stage === "deteccao";
-      const movement = detected ? frame.detection.x : frame.velocity * time;
-      context.clearRect(0, 0, width, height);
-      context.lineCap = "round";
-      context.lineJoin = "round";
-
-      drawAxis(context, width, height, x, scale);
-      stroke(context, [[16, y(0) + 11], [width - 16, y(0) + 11]], colors.carDetail);
-      drawCar(context, x, y, scale, frame, movement);
-
-      const start = screen(frame.emission);
-      const bounce = screen(frame.reflection);
-      const finish = screen(frame.detection);
-      const pulse = detected ? finish : screen(pulseAt(frame, time));
-      const returning = time > frame.outwardTime;
-      stroke(context, [start, bounce, finish], colors.planned, 1.25, [3, 5]);
-      stroke(context, [start, returning ? bounce : pulse], colors.light, 2.1);
-      if (returning) stroke(context, [bounce, pulse], colors.returnTrail, 2.1);
-
-      const detector = [x(movement), y(frame.emission.y)];
-      const mirror = vertical
-        ? [x(movement), y(HEIGHT)]
-        : [x(movement + frame.length), y(frame.emission.y)];
-
-      if (!detected) {
-        // Keep the returning pulse distinct from the detector until arrival.
-        const gap = Math.hypot(pulse[0] - detector[0], pulse[1] - detector[1]);
-        const pulseRadius = returning ? Math.min(4, gap / 2) : 4;
-        circle(context, ...pulse, 2 * pulseRadius, "rgba(126, 240, 215, .22)");
-        circle(context, ...pulse, pulseRadius, colors.light);
-      }
-      drawHardware(context, detector, mirror, detected);
-      if (detected) circle(context, ...finish, 9, null, colors.light);
-      if (stage === "emissao") circle(context, ...pulse, 3, colors.light);
-    }
-
     function stageAt(frame, time) {
-      if (time === frame.duration) return "deteccao";
-      if (time === 0) return "emissao";
-      if (time < frame.outwardTime) return "ida";
-      if (time - frame.outwardTime < frame.duration * .035) return "reflexao";
-      return "volta";
+      if (time === frame.duration) return 'deteccao';
+      if (time === 0) return 'emissao';
+      if (time < frame.outwardTime) return 'ida';
+      if (time - frame.outwardTime < frame.duration * 0.035) return 'reflexao';
+      return 'volta';
+    }
+    function configure() {
+      frames = [makeFrame(0, state.vertical), makeFrame(state.beta, state.vertical)];
+      const [train, plat] = frames;
+      duration = plat.duration;
+      limits = {
+        left: Math.min(train.rearOffset, plat.rearOffset),
+        right: Math.max(train.rearOffset + train.length, plat.detection.x + plat.rearOffset + plat.length, plat.reflection.x)
+      };
+    }
+
+    // ───────── desenho ─────────
+    function drawAxis(c, W, H, k, x, scale) {
+      const axisY = H - 24 * k;
+      const step = [1, 2, 5, 10, 20, 50].find(st => st * scale >= 46 * k) || 50;
+      const p0 = (10 * k - x(0)) / scale, p1 = (W - 52 * k - x(0)) / scale;
+      for (let t = Math.ceil(p0 / step); t <= Math.floor(p1 / step); t++) {
+        const px = x(t * step);
+        line(c, px, 6 * k, px, axisY, 'rgba(60,50,45,0.10)', 1);
+        line(c, px, axisY, px, axisY + 5 * k, AXIS, 1);
+        label(c, String(t * step).replace('-', '−'), px, axisY + 7 * k, { align: 'center', base: 'top', size: 12 * k, mono: true, color: AXIS });
+      }
+      line(c, 8 * k, axisY, W - 8 * k, axisY, AXIS, 1);
+      label(c, 'x (m)', W - 8 * k, axisY + 7 * k, { align: 'right', base: 'top', size: 12 * k, mono: true, color: AXIS });
+    }
+
+    function drawCar(c, W, k, x, y, scale, frame, movement, moving) {
+      const rear = x(frame.rearOffset + movement), wpx = frame.length * scale, front = rear + wpx, top = y(HGT), floor = y(0);
+      c.beginPath(); c.roundRect(rear, top, wpx, floor - top, Math.min(6 * k, wpx / 6));
+      c.fillStyle = 'rgba(46,124,184,0.09)'; c.fill(); c.strokeStyle = NAVY; c.lineWidth = 1.8 * k; c.stroke();
+      line(c, rear + 3 * k, floor - 5 * k, front - 3 * k, floor - 5 * k, 'rgba(26,58,92,0.35)', k);
+      c.fillStyle = GREY;
+      for (const f of [0.21, 0.79]) {   // as rodas também se contraem na direção do movimento
+        c.beginPath(); c.ellipse(rear + f * wpx, floor + 5 * k, Math.min(5 * k / frame.gamma, wpx / 12), 5 * k, 0, 0, 2 * Math.PI); c.fill();
+      }
+      // cota do comprimento
+      const yd = top - 11 * k;
+      line(c, rear, yd, front, yd, GREY, 1.2 * k);
+      line(c, rear, yd - 4 * k, rear, yd + 4 * k, GREY, 1.2 * k); line(c, front, yd - 4 * k, front, yd + 4 * k, GREY, 1.2 * k);
+      const txt = (moving ? 'L = ' : 'L₀ = ') + fmt(frame.length, 1) + ' m';
+      label(c, txt, Math.min(W - 50 * k, Math.max(50 * k, (rear + front) / 2)), yd - 10 * k, { align: 'center', size: 13.5 * k, color: GREY });
+      // seta da velocidade, dentro do vagão
+      if (moving && state.beta > 0) {
+        const xa = rear + 9 * k, xb = xa + (14 + 40 * state.beta) * k, ya = floor - 15 * k;
+        if (xb + 18 * k < front) {
+          line(c, xa, ya, xb - 4 * k, ya, NAVY, 2 * k); arrowHead(c, xb, ya, 0, 9 * k, NAVY);
+          label(c, 'v', xb + 5 * k, ya - k, { italic: true, size: 15 * k, color: NAVY });
+        }
+      }
+      return wpx;
+    }
+
+    function draw(view, frame, index, s, scale) {
+      const { w: W, h: H, k, ctx: c } = s;
+      const floorY = H - 52 * k;
+      const x = p => 26 * k + (p - limits.left) * scale, y = p => floorY - p * scale;
+      const P = pt => [x(pt.x), y(pt.y)];
+      const time = Math.min(state.elapsed, frame.duration), stage = stageAt(frame, time);
+      const detected = stage === 'deteccao', back = time > frame.outwardTime;
+      const movement = detected ? frame.detection.x : frame.velocity * time;
+      c.clearRect(0, 0, W, H); c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+      c.lineCap = 'round'; c.lineJoin = 'round';
+
+      drawAxis(c, W, H, k, x, scale);
+      line(c, 8 * k, floorY + 10.5 * k, W - 8 * k, floorY + 10.5 * k, GREY, 1.2 * k);   // trilho
+      const wpx = drawCar(c, W, k, x, y, scale, frame, movement, index === 1);
+
+      const start = P(frame.emission), bounce = P(frame.reflection), finish = P(frame.detection);
+      const pulse = detected ? finish : P(pulseAt(frame, time));
+      // Quando ida e volta caem sobre a mesma reta, desloca os dois traços para ambos aparecerem.
+      const a = [bounce[0] - start[0], bounce[1] - start[1]], b = [finish[0] - bounce[0], finish[1] - bounce[1]];
+      const la = Math.hypot(a[0], a[1]) || 1, lb = Math.hypot(b[0], b[1]) || 1;
+      const collinear = Math.abs(a[0] * b[1] - a[1] * b[0]) / (la * lb) < 0.03;
+      const off = collinear ? 3 * k : 0, nx = -a[1] / la * off, ny = a[0] / la * off;
+      c.save(); c.strokeStyle = GREY; c.lineWidth = 1.3 * k; c.setLineDash([4 * k, 5 * k]);
+      c.beginPath(); c.moveTo(start[0], start[1]); c.lineTo(bounce[0], bounce[1]); c.lineTo(finish[0], finish[1]); c.stroke(); c.restore();
+      const outEnd = back ? bounce : pulse;
+      line(c, start[0] + nx, start[1] + ny, outEnd[0] + nx, outEnd[1] + ny, BLUE, 2.8 * k);
+      if (back) line(c, bounce[0] - nx, bounce[1] - ny, pulse[0] - nx, pulse[1] - ny, RED, 2.8 * k);
+
+      const det = [x(movement), y(frame.emission.y)];
+      const mir = state.vertical ? [x(movement), y(HGT)] : [x(movement + frame.length), y(frame.emission.y)];
+      if (!detected) {
+        const gap = Math.hypot(pulse[0] - det[0], pulse[1] - det[1]);
+        const r = back ? Math.min(5 * k, gap / 2) : 5 * k, col = back ? RED : BLUE;
+        c.beginPath(); c.arc(pulse[0], pulse[1], 2.1 * r, 0, 2 * Math.PI); c.fillStyle = back ? 'rgba(198,48,42,0.2)' : 'rgba(42,111,191,0.2)'; c.fill();
+        c.beginPath(); c.arc(pulse[0], pulse[1], r, 0, 2 * Math.PI); c.fillStyle = col; c.fill();
+      }
+      // emissor/detector e espelho
+      const dz = 5 * k;
+      c.fillStyle = detected ? GREEN : '#fff'; c.fillRect(det[0] - dz, det[1] - dz, 2 * dz, 2 * dz);
+      c.strokeStyle = INK; c.lineWidth = 1.6 * k; c.strokeRect(det[0] - dz, det[1] - dz, 2 * dz, 2 * dz);
+      for (const sh of [-1.8 * k, 1.8 * k]) {
+        if (state.vertical) line(c, mir[0] - 11 * k, mir[1] + sh, mir[0] + 11 * k, mir[1] + sh, INK, 1.5 * k);
+        else line(c, mir[0] + sh, mir[1] - 11 * k, mir[0] + sh, mir[1] + 11 * k, INK, 1.5 * k);
+      }
+      if (detected) { c.beginPath(); c.arc(finish[0], finish[1], 11 * k, 0, 2 * Math.PI); c.strokeStyle = GREEN; c.lineWidth = 2 * k; c.stroke(); }
+      // nomes das peças, só na cena do vagão (em repouso e mais largo)
+      if (index === 0 && wpx > 190 * k) {
+        const o = { size: 12.5 * k, color: GREY };
+        if (state.vertical) {
+          label(c, 'espelho', mir[0] + 17 * k, mir[1] + 13 * k, o);
+          label(c, 'emissor e detector', det[0] + 13 * k, det[1] - 15 * k, o);
+        } else {
+          label(c, 'emissor e detector', det[0] + 11 * k, det[1] + 19 * k, o);
+          label(c, 'espelho', mir[0] - 11 * k, mir[1] + 19 * k, { ...o, align: 'right' });
+        }
+      }
     }
 
     function render() {
-      const width = Math.min(...views.map((view) => view.width));
-      const height = Math.min(...views.map((view) => view.height));
-      const scale = Math.min((width - 62) / (limits.right - limits.left), (height - 78) / HEIGHT, 20);
-      views.forEach((view, index) => {
-        const frame = frames[index];
-        const time = Math.min(elapsed, frame.duration);
-        const stage = stageAt(frame, time);
-        if (view.phase.dataset.stage !== stage) {
-          view.phase.dataset.stage = stage;
-          view.phase.textContent = stages[stage];
-        }
-        view.time.textContent = number.format(time) + " ns";
-        view.distance.textContent = number.format(time * C) + " m";
-        view.length.textContent = number.format(frame.length) + " m";
-        if (scale > 0) draw(view, frame, stage, time, scale);
+      const sizes = views.map(v => size(v.cv));
+      if (sizes.some(s => !s)) return;
+      const k = sizes[0].k, W = Math.min(...sizes.map(s => s.w)), H = Math.min(...sizes.map(s => s.h));
+      const scale = Math.min((W - 58 * k) / (limits.right - limits.left), (H - 88 * k) / HGT);
+      if (scale <= 0) return;
+      views.forEach((view, i) => draw(view, frames[i], i, sizes[i], scale));
+    }
+
+    function updateText() {
+      const [train, plat] = frames;
+      views.forEach((view, i) => {
+        const frame = frames[i], time = Math.min(state.elapsed, frame.duration), stage = stageAt(frame, time);
+        if (view.phase.dataset.stage !== stage) { view.phase.dataset.stage = stage; view.phase.textContent = STAGES[stage]; }
+        view.time.textContent = fmt(time, 1) + ' ns';
+        view.distance.textContent = fmt(time * C, 1) + ' m';
+        view.length.textContent = fmt(frame.length, 1) + ' m';
       });
-      timeline.value = String(elapsed === duration ? 1000 : Math.min(999, Math.round(elapsed / duration * 1000)));
-      byId("timeline-value").textContent = number.format(elapsed) + " ns";
-      timeline.setAttribute("aria-valuetext", number.format(elapsed) + " nanossegundos desde a emissão");
+      $('speedOut').textContent = fmt(state.beta, 2) + ' c';
+      $('speed').setAttribute('aria-valuetext', fmt(state.beta, 2) + ' vezes a velocidade da luz');
+      $('status').textContent = 'γ = ' + fmt(plat.gamma, 3);
+      $('dtTrain').textContent = fmt(train.duration, 1) + ' ns';
+      $('dtPlat').textContent = fmt(plat.duration, 1) + ' ns';
+      $('ratio').textContent = fmt(plat.duration / train.duration, 3);
+      $('len0').textContent = fmt(L0, 1) + ' m';
+      $('len').textContent = fmt(plat.length, 1) + ' m';
+      $('note').textContent = NOTES[state.vertical ? 'vertical' : 'horizontal'];
+      $('timeline').value = String(state.elapsed === duration ? 1000 : Math.min(999, Math.round(state.elapsed / duration * 1000)));
+      $('timelineOut').textContent = fmt(state.elapsed, 1) + ' ns';
+      $('timeline').setAttribute('aria-valuetext', fmt(state.elapsed, 1) + ' nanossegundos desde a emissão');
+      document.querySelectorAll('#vBtns button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.b === state.beta)));
+      document.querySelectorAll('#orient button').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.orientation === 'vertical') === state.vertical)));
     }
+    const update = () => { updateText(); render(); };
 
-    function stopPlayback() {
-      if (animation !== null) cancelAnimationFrame(animation);
-      animation = null;
-      previousTimestamp = null;
-      play.textContent = elapsed === duration ? "Repetir" : "Reproduzir";
+    // ───────── reprodução ─────────
+    function stop() {
+      if (raf !== null) cancelAnimationFrame(raf);
+      raf = null; last = null;
+      $('play').textContent = state.elapsed === duration ? '↻ Repetir' : '▶ Reproduzir';
     }
-
-    function reset() {
-      elapsed = 0;
-      stopPlayback();
-      render();
-    }
-
-    function advance(timestamp) {
-      if (previousTimestamp !== null) {
-        elapsed += (timestamp - previousTimestamp) * duration / PLAYBACK_MS;
-      }
-      if (elapsed >= duration) {
-        elapsed = duration;
-        stopPlayback();
-        render();
-        byId("announcement").textContent = "Pulso detectado nos dois referenciais.";
+    function tick(ts) {
+      if (last !== null) state.elapsed += (ts - last) * duration / PLAYBACK_MS;
+      if (state.elapsed >= duration) {
+        state.elapsed = duration; stop(); update();
+        $('announcement').textContent = 'Pulso detectado nos dois referenciais.';
         return;
       }
-      previousTimestamp = timestamp;
-      render();
-      animation = requestAnimationFrame(advance);
+      last = ts; update(); raf = requestAnimationFrame(tick);
+    }
+    function reset() { state.elapsed = 0; stop(); update(); }
+    function setBeta(b) {
+      const f = duration ? state.elapsed / duration : 0;
+      state.beta = b; $('speed').value = String(b);
+      configure(); state.elapsed = f * duration;
+      if (raf === null) stop();
+      update();
     }
 
-    function resize() {
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-      for (const view of views) {
-        const { width, height } = view.canvas.getBoundingClientRect();
-        view.width = width;
-        view.height = height;
-        view.canvas.width = Math.max(1, Math.round(width * pixelRatio));
-        view.canvas.height = Math.max(1, Math.round(height * pixelRatio));
-        view.context?.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-      }
-      render();
-    }
-
-    orientationButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const nextVertical = button.dataset.orientation === "vertical";
-        if (nextVertical === vertical) return;
-        vertical = nextVertical;
-        orientationButtons.forEach((option) => option.setAttribute("aria-pressed", String(option === button)));
-        configureScene();
-        reset();
-      });
+    $('play').addEventListener('click', () => {
+      if (raf !== null) { stop(); return; }
+      if (state.elapsed === duration) state.elapsed = 0;
+      $('announcement').textContent = '';
+      $('play').textContent = '❚❚ Pausar';
+      raf = requestAnimationFrame(tick);
+    });
+    $('reset').addEventListener('click', reset);
+    $('timeline').addEventListener('input', e => { state.elapsed = +e.target.value / 1000 * duration; stop(); update(); });
+    $('speed').addEventListener('input', e => setBeta(+e.target.value));
+    $('vBtns').addEventListener('click', e => { const b = e.target.closest('button[data-b]'); if (b) setBeta(+b.dataset.b); });
+    $('orient').addEventListener('click', e => {
+      const b = e.target.closest('button[data-orientation]'); if (!b) return;
+      const v = b.dataset.orientation === 'vertical'; if (v === state.vertical) return;
+      state.vertical = v; configure(); reset();
     });
 
-    speed.addEventListener("input", () => {
-      const fraction = elapsed / duration;
-      configureScene();
-      elapsed = fraction * duration;
-      render();
-    });
-
-    timeline.addEventListener("input", () => {
-      elapsed = Number(timeline.value) / 1000 * duration;
-      stopPlayback();
-      render();
-    });
-
-    play.addEventListener("click", () => {
-      if (animation !== null) {
-        stopPlayback();
-        return;
-      }
-      if (elapsed === duration) elapsed = 0;
-      byId("announcement").textContent = "";
-      play.textContent = "Pausar";
-      animation = requestAnimationFrame(advance);
-    });
-
-    byId("reset").addEventListener("click", reset);
-    configureScene();
-    resize();
-    const observer = new ResizeObserver(resize);
-    views.forEach((view) => observer.observe(view.canvas));
+    configure(); watch(render); update();
+  })();
   </script>
 </body>
 </html>
