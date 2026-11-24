@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Relógio de luz em dois referenciais · Física IV · Prof. Alexandre Bonatto</title>
-  <meta name="description" content="Simulação de um relógio de luz visto do vagão e da plataforma: dilatação do tempo, Δt = γΔt′, e contração do comprimento, L = L₀/γ." />
+  <meta name="description" content="Simulação de um relógio de luz visto do vagão e da plataforma: dilatação do tempo, Δt = γΔt′, e contração do comprimento, L = L₀/γ. Inclui a comparação com uma bolinha, em que as velocidades se somam." />
   <link rel="stylesheet" href="../../assets/sim.css?v=202611241101" />
   <style>
     .metrics { display: flex; flex-wrap: wrap; gap: .1rem 1.2rem; margin-left: auto; }
@@ -15,7 +15,8 @@
     .phase[data-stage="reflexao"], .phase[data-stage="volta"] { color: var(--hot); }
     .phase[data-stage="deteccao"] { color: #fff; background: var(--green); border-color: var(--green); }
     .legend .lout { color: var(--w1); } .legend .lback { color: var(--hot); }
-    .formulas { display: grid; gap: .5rem; justify-items: start; }
+    .fset { display: grid; gap: .5rem; justify-items: start; }
+    .fset[hidden] { display: none; }
     .formulas .eq { font-size: 1.2rem; gap: .6rem; }
     .formulas small { font-family: var(--ui); font-size: .8rem; color: var(--muted); }
     @media (min-width: 901px) and (max-width: 1400px) { .head .sub { display: none; } }   /* cabeçalho em uma linha só */
@@ -31,7 +32,7 @@
       <div class="legend">
         <span class="lout"><i></i> ida</span>
         <span class="lback"><i></i> volta</span>
-        <span class="dash"><i></i> trajeto completo do pulso</span>
+        <span class="dash"><i></i> trajeto completo</span>
         <span>as duas cenas usam a mesma escala de distância</span>
       </div>
 
@@ -41,12 +42,12 @@
           <span class="sub">a câmera acompanha o vagão</span>
           <div class="metrics">
             <span>Tempo <b data-reading="time">0,0 ns</b></span>
-            <span>Percurso da luz <b data-reading="distance">0,0 m</b></span>
-            <span>Comprimento <b data-reading="length">12,0 m</b></span>
+            <span>Percurso <b data-reading="distance">0,0 m</b></span>
+            <span>Velocidade <b data-reading="speed">c</b></span>
           </div>
           <span class="phase" data-stage="emissao">Emissão</span>
         </div>
-        <div class="cv"><canvas aria-label="Trajetória do pulso de luz no referencial do vagão. O eixo horizontal mede a posição em metros."></canvas></div>
+        <div class="cv"><canvas aria-label="Trajetória da luz ou da bolinha no referencial do vagão. O eixo horizontal mede a posição em metros."></canvas></div>
       </div>
 
       <div class="sheet grow" data-view="platform">
@@ -55,19 +56,19 @@
           <span class="sub">a câmera está fixa nos trilhos</span>
           <div class="metrics">
             <span>Tempo <b data-reading="time">0,0 ns</b></span>
-            <span>Percurso da luz <b data-reading="distance">0,0 m</b></span>
-            <span>Comprimento <b data-reading="length">9,6 m</b></span>
+            <span>Percurso <b data-reading="distance">0,0 m</b></span>
+            <span>Velocidade <b data-reading="speed">c</b></span>
           </div>
           <span class="phase" data-stage="emissao">Emissão</span>
         </div>
-        <div class="cv"><canvas aria-label="Trajetória do pulso de luz e posição do vagão no referencial da plataforma. O eixo horizontal mede a posição em metros."></canvas></div>
+        <div class="cv"><canvas aria-label="Trajetória da luz ou da bolinha e posição do vagão no referencial da plataforma. O eixo horizontal mede a posição em metros."></canvas></div>
       </div>
 
       <div class="sheet transport">
         <button type="button" class="btn primary" id="play">▶ Reproduzir</button>
         <button type="button" class="btn" id="reset">Reiniciar</button>
         <div class="tl">
-          <label for="timeline"><span>Tempo desde a emissão</span><output id="timelineOut" for="timeline">0,0 ns</output></label>
+          <label for="timeline"><span id="timelineLbl">Tempo desde a emissão</span><output id="timelineOut" for="timeline">0,0 ns</output></label>
           <input type="range" id="timeline" min="0" max="1000" step="1" value="0" />
         </div>
       </div>
@@ -75,7 +76,14 @@
 
     <aside class="panel">
       <div class="card">
-        <h2>Relógio de luz</h2>
+        <h2>Relógio</h2>
+        <div class="ctrl">
+          <div class="presets" id="object" role="group" aria-label="O que vai e volta no relógio">
+            <span class="lbl">objeto</span>
+            <button type="button" data-mode="light" aria-pressed="true">luz</button>
+            <button type="button" data-mode="ball" aria-pressed="false">bolinha</button>
+          </div>
+        </div>
         <div class="ctrl">
           <div class="presets" id="orient" role="group" aria-label="Orientação do relógio">
             <span class="lbl">orientação</span>
@@ -86,16 +94,15 @@
         <div class="ctrl">
           <label for="speed"><span>Velocidade do vagão, v</span><output id="speedOut" for="speed">0,60 c</output></label>
           <input type="range" id="speed" min="0" max="0.9" step="0.01" value="0.6" />
-          <div class="presets" id="vBtns" role="group" aria-label="Valores de v em unidades de c">
-            <button type="button" data-b="0">0</button><button type="button" data-b="0.3">0,3</button><button type="button" data-b="0.6">0,6</button>
-            <button type="button" data-b="0.8">0,8</button><button type="button" data-b="0.9">0,9</button>
-          </div>
+          <div class="presets" id="vBtns" role="group" aria-label="Valores de v"></div>
         </div>
       </div>
 
       <div class="readout" id="readout">
         <p class="status" id="status">γ = 1,25</p>
         <dl>
+          <dt>Velocidade no vagão</dt><dd id="vTrain">c</dd>
+          <dt id="vPlatLbl">Velocidade na plataforma</dt><dd id="vPlat">c</dd>
           <dt>Ida e volta no vagão, Δt′</dt><dd id="dtTrain">40,0 ns</dd>
           <dt>Ida e volta na plataforma, Δt</dt><dd id="dtPlat">50,0 ns</dd>
           <dt>Razão Δt / Δt′</dt><dd id="ratio">1,25</dd>
@@ -106,9 +113,16 @@
 
       <div class="card formulas">
         <h2>Fórmulas</h2>
-        <div class="eq"><span><span class="v">γ</span> =</span><span class="frac"><span class="num">1</span><span class="den">√<span class="rad">1 − <span class="v">v</span><sup>2</sup>/<span class="v">c</span><sup>2</sup></span></span></span></div>
-        <div class="eq"><span>Δ<span class="v">t</span> = <span class="v">γ</span> Δ<span class="v">t</span>′</span><small>dilatação do tempo</small></div>
-        <div class="eq"><span><span class="v">L</span> = <span class="v">L</span><sub>0</sub> / <span class="v">γ</span></span><small>contração do comprimento</small></div>
+        <div class="fset" data-for="light">
+          <div class="eq"><span><span class="v">γ</span> =</span><span class="frac"><span class="num">1</span><span class="den">√<span class="rad">1 − <span class="v">v</span><sup>2</sup>/<span class="v">c</span><sup>2</sup></span></span></span></div>
+          <div class="eq"><span>Δ<span class="v">t</span> = <span class="v">γ</span> Δ<span class="v">t</span>′</span><small>dilatação do tempo</small></div>
+          <div class="eq"><span><span class="v">L</span> = <span class="v">L</span><sub>0</sub> / <span class="v">γ</span></span><small>contração do comprimento</small></div>
+        </div>
+        <div class="fset" data-for="ball" hidden>
+          <div class="eq"><span>Δ<span class="v">t</span> = Δ<span class="v">t</span>′</span><small>o tempo é o mesmo</small></div>
+          <div class="eq"><span><span class="v">L</span> = <span class="v">L</span><sub>0</sub></span><small>o comprimento é o mesmo</small></div>
+          <div class="eq"><span><span class="v">u</span><sub>x</sub> = <span class="v">u</span>′<sub>x</sub> + <span class="v">v</span></span><small>as velocidades se somam</small></div>
+        </div>
       </div>
 
       <p class="note" id="note"></p>
@@ -121,34 +135,67 @@
   <script>
   (function () {
     const { fmt, size, watch, line, arrowHead, label } = Sim;
-    // Distâncias em metros e tempos em nanossegundos.
-    const C = 0.299792458, L0 = 12, HGT = 6, PLAYBACK_MS = 6800;
+    const L0 = 12, HGT = 6, PLAYBACK_MS = 6800;
     const INK = '#1e1c19', GREY = '#5a6a7a', NAVY = '#1a3a5c', BLUE = '#2a6fbf', RED = '#c6302a', GREEN = '#1f8f5f', AXIS = '#4a4540';
-    const STAGES = { emissao: 'Emissão', ida: 'Ida', reflexao: 'Reflexão', volta: 'Volta', deteccao: 'Detectado' };
-    const NOTES = {
-      vertical: 'Relógio vertical: emissor no piso, espelho no teto, a 6 m. Na plataforma a luz percorre uma diagonal mais longa com a mesma velocidade c, então leva mais tempo. Cada cena avança no tempo do próprio referencial e para na detecção.',
-      horizontal: 'Relógio horizontal: emissor na traseira, espelho na dianteira. Para o tempo de ida e volta na plataforma ser γΔt′, como no relógio vertical, o vagão precisa medir L₀/γ. Cada cena avança no tempo do próprio referencial e para na detecção.'
+    /* Luz: metros e nanossegundos, velocidade do vagão em unidades de c, relatividade restrita.
+       Bolinha: metros e segundos, velocidade do vagão em m/s, tratada como em Galileu (as velocidades se somam). */
+    const MODES = {
+      light: {
+        speed: 0.299792458, tUnit: 'ns', tDg: 1, vMax: 0.9, vStep: 0.01, presets: [0, 0.3, 0.6, 0.8, 0.9],
+        stages: { emissao: 'Emissão', ida: 'Ida', reflexao: 'Reflexão', volta: 'Volta', deteccao: 'Detectado' },
+        parts: ['emissor e detector', 'espelho'], since: 'Tempo desde a emissão', done: 'Pulso detectado nos dois referenciais.',
+        notes: {
+          vertical: 'Relógio vertical: emissor no piso, espelho no teto, a 6 m. Na plataforma a luz percorre uma diagonal mais longa com a mesma velocidade c, então leva mais tempo. Cada cena avança no tempo do próprio referencial e para na detecção.',
+          horizontal: 'Relógio horizontal: emissor na traseira, espelho na dianteira. Para o tempo de ida e volta na plataforma ser γΔt′, como no relógio vertical, o vagão precisa medir L₀/γ. Cada cena avança no tempo do próprio referencial e para na detecção.'
+        }
+      },
+      ball: {
+        speed: 10, tUnit: 's', tDg: 2, vMax: 20, vStep: 0.5, presets: [0, 5, 10, 15, 20],
+        stages: { emissao: 'Lançamento', ida: 'Ida', reflexao: 'Rebate', volta: 'Volta', deteccao: 'Chegada' },
+        parts: ['lançador e sensor', 'anteparo'], since: 'Tempo desde o lançamento', done: 'A bolinha chegou ao sensor nos dois referenciais.',
+        notes: {
+          vertical: 'Bolinha lançada a 10 m/s em relação ao vagão, sem gravidade nem perdas no rebate. Na plataforma ela percorre uma diagonal mais longa, mas também é mais rápida, porque as velocidades se somam. O tempo de ida e volta é o mesmo nos dois referenciais.',
+          horizontal: 'Bolinha lançada a 10 m/s em relação ao vagão, sem gravidade nem perdas no rebate. Na plataforma ela é mais rápida na ida (u′ + v) e mais lenta na volta. O tempo de ida e volta e o comprimento do vagão são os mesmos nos dois referenciais.'
+        }
+      }
     };
     const $ = id => document.getElementById(id);
-    const state = { vertical: true, beta: 0.6, elapsed: 0 };
+    const state = { mode: 'light', vertical: true, v: { light: 0.6, ball: 8 }, elapsed: 0 };
     const views = [...document.querySelectorAll('[data-view]')].map(el => ({
       cv: el.querySelector('canvas'), phase: el.querySelector('.phase'),
       time: el.querySelector('[data-reading="time"]'), distance: el.querySelector('[data-reading="distance"]'),
-      length: el.querySelector('[data-reading="length"]')
+      speed: el.querySelector('[data-reading="speed"]')
     }));
     let frames, limits, duration = 0, raf = null, last = null;
+    const M = () => MODES[state.mode];
+    const isLight = () => state.mode === 'light';
+    const fmtT = t => fmt(t, M().tDg) + ' ' + M().tUnit;
+    const fmtV = v => isLight() ? fmt(v, 2) + ' c' : fmt(v, 1) + ' m/s';
+    const fmtU = u => isLight() ? 'c' : fmt(u, 1) + ' m/s';      // rapidez da luz ou da bolinha
 
     // ───────── física ─────────
-    function makeFrame(beta, vertical) {
-      const gamma = 1 / Math.sqrt(1 - beta * beta), velocity = beta * C, length = L0 / gamma;
+    function makeFrame(moving) {
+      const light = isLight(), vertical = state.vertical, s = M().speed;
+      const setting = moving ? state.v[state.mode] : 0;
+      const velocity = light ? setting * s : setting;
+      const gamma = light ? 1 / Math.sqrt(1 - setting * setting) : 1;
+      const length = L0 / gamma;
       const rearOffset = vertical ? -length / 2 : 0;          // posição da traseira em relação ao emissor
-      const outwardTime = vertical ? HGT * gamma / C : length / (C - velocity);
-      const inwardTime = vertical ? outwardTime : length / (C + velocity);
+      let outwardTime, inwardTime, speedOut, speedBack;
+      if (light) {          // c é a mesma nos dois referenciais
+        outwardTime = vertical ? HGT * gamma / s : length / (s - velocity);
+        inwardTime = vertical ? outwardTime : length / (s + velocity);
+        speedOut = speedBack = s;
+      } else {              // Galileu: o tempo é o mesmo e a velocidade do vagão se soma à da bolinha
+        outwardTime = inwardTime = (vertical ? HGT : length) / s;
+        speedOut = vertical ? Math.hypot(velocity, s) : s + velocity;
+        speedBack = vertical ? speedOut : Math.abs(s - velocity);
+      }
       const total = outwardTime + inwardTime;
       const emission = { x: 0, y: vertical ? 0 : HGT / 2 };
       const reflection = { x: velocity * outwardTime + (vertical ? 0 : length), y: vertical ? HGT : emission.y };
       const detection = { x: velocity * total, y: emission.y };
-      return { gamma, velocity, length, rearOffset, outwardTime, inwardTime, duration: total, emission, reflection, detection };
+      return { gamma, velocity, length, rearOffset, outwardTime, inwardTime, duration: total, speedOut, speedBack, emission, reflection, detection };
     }
     function pulseAt(frame, time) {
       const back = time > frame.outwardTime;
@@ -156,6 +203,8 @@
       const f = back ? (time - frame.outwardTime) / frame.inwardTime : time / frame.outwardTime;
       return { x: from.x + (to.x - from.x) * f, y: from.y + (to.y - from.y) * f };
     }
+    const pathAt = (frame, time) => time > frame.outwardTime
+      ? frame.speedOut * frame.outwardTime + frame.speedBack * (time - frame.outwardTime) : frame.speedOut * time;
     function stageAt(frame, time) {
       if (time === frame.duration) return 'deteccao';
       if (time === 0) return 'emissao';
@@ -164,7 +213,7 @@
       return 'volta';
     }
     function configure() {
-      frames = [makeFrame(0, state.vertical), makeFrame(state.beta, state.vertical)];
+      frames = [makeFrame(false), makeFrame(true)];
       const [train, plat] = frames;
       duration = plat.duration;
       limits = {
@@ -194,7 +243,7 @@
       c.fillStyle = 'rgba(46,124,184,0.09)'; c.fill(); c.strokeStyle = NAVY; c.lineWidth = 1.8 * k; c.stroke();
       line(c, rear + 3 * k, floor - 5 * k, front - 3 * k, floor - 5 * k, 'rgba(26,58,92,0.35)', k);
       c.fillStyle = GREY;
-      for (const f of [0.21, 0.79]) {   // as rodas também se contraem na direção do movimento
+      for (const f of [0.21, 0.79]) {   // com a luz, as rodas também se contraem na direção do movimento
         c.beginPath(); c.ellipse(rear + f * wpx, floor + 5 * k, Math.min(5 * k / frame.gamma, wpx / 12), 5 * k, 0, 0, 2 * Math.PI); c.fill();
       }
       // cota do comprimento
@@ -204,8 +253,9 @@
       const txt = (moving ? 'L = ' : 'L₀ = ') + fmt(frame.length, 1) + ' m';
       label(c, txt, Math.min(W - 50 * k, Math.max(50 * k, (rear + front) / 2)), yd - 10 * k, { align: 'center', size: 13.5 * k, color: GREY });
       // seta da velocidade, dentro do vagão
-      if (moving && state.beta > 0) {
-        const xa = rear + 9 * k, xb = xa + (14 + 40 * state.beta) * k, ya = floor - 15 * k;
+      const setting = state.v[state.mode];
+      if (moving && setting > 0) {
+        const xa = rear + 9 * k, xb = xa + (14 + 40 * setting / M().vMax) * k, ya = floor - 15 * k;
         if (xb + 18 * k < front) {
           line(c, xa, ya, xb - 4 * k, ya, NAVY, 2 * k); arrowHead(c, xb, ya, 0, 9 * k, NAVY);
           label(c, 'v', xb + 5 * k, ya - k, { italic: true, size: 15 * k, color: NAVY });
@@ -216,7 +266,7 @@
 
     function draw(view, frame, index, s, scale) {
       const { w: W, h: H, k, ctx: c } = s;
-      const floorY = H - 52 * k;
+      const light = isLight(), floorY = H - 52 * k;
       const x = p => 26 * k + (p - limits.left) * scale, y = p => floorY - p * scale;
       const P = pt => [x(pt.x), y(pt.y)];
       const time = Math.min(state.elapsed, frame.duration), stage = stageAt(frame, time);
@@ -245,12 +295,18 @@
       const det = [x(movement), y(frame.emission.y)];
       const mir = state.vertical ? [x(movement), y(HGT)] : [x(movement + frame.length), y(frame.emission.y)];
       if (!detected) {
-        const gap = Math.hypot(pulse[0] - det[0], pulse[1] - det[1]);
-        const r = back ? Math.min(5 * k, gap / 2) : 5 * k, col = back ? RED : BLUE;
-        c.beginPath(); c.arc(pulse[0], pulse[1], 2.1 * r, 0, 2 * Math.PI); c.fillStyle = back ? 'rgba(198,48,42,0.2)' : 'rgba(42,111,191,0.2)'; c.fill();
-        c.beginPath(); c.arc(pulse[0], pulse[1], r, 0, 2 * Math.PI); c.fillStyle = col; c.fill();
+        const gap = Math.hypot(pulse[0] - det[0], pulse[1] - det[1]), base = (light ? 5 : 7) * k;
+        const r = back ? Math.min(base, gap / 2) : base, col = back ? RED : BLUE;
+        if (light) {        // pulso de luz: ponto com halo
+          c.beginPath(); c.arc(pulse[0], pulse[1], 2.1 * r, 0, 2 * Math.PI); c.fillStyle = back ? 'rgba(198,48,42,0.2)' : 'rgba(42,111,191,0.2)'; c.fill();
+          c.beginPath(); c.arc(pulse[0], pulse[1], r, 0, 2 * Math.PI); c.fillStyle = col; c.fill();
+        } else {            // bolinha: contorno escuro e um brilho
+          c.beginPath(); c.arc(pulse[0], pulse[1], r, 0, 2 * Math.PI); c.fillStyle = col; c.fill();
+          c.lineWidth = 1.5 * k; c.strokeStyle = INK; c.stroke();
+          c.beginPath(); c.arc(pulse[0] - 0.32 * r, pulse[1] - 0.32 * r, 0.26 * r, 0, 2 * Math.PI); c.fillStyle = 'rgba(255,255,255,0.75)'; c.fill();
+        }
       }
-      // emissor/detector e espelho
+      // emissor/detector e espelho (ou lançador/sensor e anteparo)
       const dz = 5 * k;
       c.fillStyle = detected ? GREEN : '#fff'; c.fillRect(det[0] - dz, det[1] - dz, 2 * dz, 2 * dz);
       c.strokeStyle = INK; c.lineWidth = 1.6 * k; c.strokeRect(det[0] - dz, det[1] - dz, 2 * dz, 2 * dz);
@@ -261,13 +317,13 @@
       if (detected) { c.beginPath(); c.arc(finish[0], finish[1], 11 * k, 0, 2 * Math.PI); c.strokeStyle = GREEN; c.lineWidth = 2 * k; c.stroke(); }
       // nomes das peças, só na cena do vagão (em repouso e mais largo)
       if (index === 0 && wpx > 190 * k) {
-        const o = { size: 12.5 * k, color: GREY };
+        const o = { size: 12.5 * k, color: GREY }, [source, wall] = M().parts;
         if (state.vertical) {
-          label(c, 'espelho', mir[0] + 17 * k, mir[1] + 13 * k, o);
-          label(c, 'emissor e detector', det[0] + 13 * k, det[1] - 15 * k, o);
+          label(c, wall, mir[0] + 17 * k, mir[1] + 13 * k, o);
+          label(c, source, det[0] + 13 * k, det[1] - 15 * k, o);
         } else {
-          label(c, 'emissor e detector', det[0] + 11 * k, det[1] + 19 * k, o);
-          label(c, 'espelho', mir[0] - 11 * k, mir[1] + 19 * k, { ...o, align: 'right' });
+          label(c, source, det[0] + 11 * k, det[1] + 19 * k, o);
+          label(c, wall, mir[0] - 11 * k, mir[1] + 19 * k, { ...o, align: 'right' });
         }
       }
     }
@@ -282,28 +338,35 @@
     }
 
     function updateText() {
-      const [train, plat] = frames;
+      const [train, plat] = frames, m = M(), light = isLight(), setting = state.v[state.mode];
       views.forEach((view, i) => {
         const frame = frames[i], time = Math.min(state.elapsed, frame.duration), stage = stageAt(frame, time);
-        if (view.phase.dataset.stage !== stage) { view.phase.dataset.stage = stage; view.phase.textContent = STAGES[stage]; }
-        view.time.textContent = fmt(time, 1) + ' ns';
-        view.distance.textContent = fmt(time * C, 1) + ' m';
-        view.length.textContent = fmt(frame.length, 1) + ' m';
+        if (view.phase.dataset.stage !== stage || view.phase.textContent !== m.stages[stage]) { view.phase.dataset.stage = stage; view.phase.textContent = m.stages[stage]; }
+        view.time.textContent = fmtT(time);
+        view.distance.textContent = fmt(pathAt(frame, time), 1) + ' m';
+        view.speed.textContent = fmtU(time > frame.outwardTime ? frame.speedBack : frame.speedOut);
       });
-      $('speedOut').textContent = fmt(state.beta, 2) + ' c';
-      $('speed').setAttribute('aria-valuetext', fmt(state.beta, 2) + ' vezes a velocidade da luz');
-      $('status').textContent = 'γ = ' + fmt(plat.gamma, 3);
-      $('dtTrain').textContent = fmt(train.duration, 1) + ' ns';
-      $('dtPlat').textContent = fmt(plat.duration, 1) + ' ns';
+      $('speedOut').textContent = fmtV(setting);
+      $('speed').setAttribute('aria-valuetext', light ? fmt(setting, 2) + ' vezes a velocidade da luz' : fmt(setting, 1) + ' metros por segundo');
+      $('status').textContent = light ? 'γ = ' + fmt(plat.gamma, 3) : 'Mesmo tempo nos dois referenciais';
+      $('vTrain').textContent = fmtU(train.speedOut);
+      const twoSpeeds = !light && !state.vertical;          // bolinha no relógio horizontal: rapidez diferente na ida e na volta
+      $('vPlatLbl').textContent = twoSpeeds ? 'Na plataforma, ida e volta' : 'Velocidade na plataforma';
+      $('vPlat').textContent = twoSpeeds ? fmt(plat.speedOut, 1) + ' e ' + fmt(plat.speedBack, 1) + ' m/s' : fmtU(plat.speedOut);
+      $('dtTrain').textContent = fmtT(train.duration);
+      $('dtPlat').textContent = fmtT(plat.duration);
       $('ratio').textContent = fmt(plat.duration / train.duration, 3);
       $('len0').textContent = fmt(L0, 1) + ' m';
       $('len').textContent = fmt(plat.length, 1) + ' m';
-      $('note').textContent = NOTES[state.vertical ? 'vertical' : 'horizontal'];
+      $('note').textContent = m.notes[state.vertical ? 'vertical' : 'horizontal'];
+      $('timelineLbl').textContent = m.since;
       $('timeline').value = String(state.elapsed === duration ? 1000 : Math.min(999, Math.round(state.elapsed / duration * 1000)));
-      $('timelineOut').textContent = fmt(state.elapsed, 1) + ' ns';
-      $('timeline').setAttribute('aria-valuetext', fmt(state.elapsed, 1) + ' nanossegundos desde a emissão');
-      document.querySelectorAll('#vBtns button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.b === state.beta)));
+      $('timelineOut').textContent = fmtT(state.elapsed);
+      $('timeline').setAttribute('aria-valuetext', fmtT(state.elapsed));
+      document.querySelectorAll('#vBtns button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.b === setting)));
       document.querySelectorAll('#orient button').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.orientation === 'vertical') === state.vertical)));
+      document.querySelectorAll('#object button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode)));
+      document.querySelectorAll('.fset').forEach(el => { el.hidden = el.dataset.for !== state.mode; });
     }
     const update = () => { updateText(); render(); };
 
@@ -317,18 +380,27 @@
       if (last !== null) state.elapsed += (ts - last) * duration / PLAYBACK_MS;
       if (state.elapsed >= duration) {
         state.elapsed = duration; stop(); update();
-        $('announcement').textContent = 'Pulso detectado nos dois referenciais.';
+        $('announcement').textContent = M().done;
         return;
       }
       last = ts; update(); raf = requestAnimationFrame(tick);
     }
     function reset() { state.elapsed = 0; stop(); update(); }
-    function setBeta(b) {
+    function setV(v) {
       const f = duration ? state.elapsed / duration : 0;
-      state.beta = b; $('speed').value = String(b);
+      state.v[state.mode] = v; $('speed').value = String(v);
       configure(); state.elapsed = f * duration;
       if (raf === null) stop();
       update();
+    }
+    // Ajusta o controle de velocidade ao objeto escolhido: frações de c para a luz, m/s para a bolinha.
+    function setMode(mode) {
+      state.mode = mode;
+      const m = M(), sp = $('speed');
+      sp.max = String(m.vMax); sp.step = String(m.vStep); sp.value = String(state.v[mode]);
+      $('vBtns').innerHTML = m.presets.map(p => `<button type="button" data-b="${p}">${String(p).replace('.', ',')}</button>`).join('');
+      $('vBtns').setAttribute('aria-label', mode === 'light' ? 'Valores de v em unidades de c' : 'Valores de v em metros por segundo');
+      configure(); reset();
     }
 
     $('play').addEventListener('click', () => {
@@ -340,15 +412,18 @@
     });
     $('reset').addEventListener('click', reset);
     $('timeline').addEventListener('input', e => { state.elapsed = +e.target.value / 1000 * duration; stop(); update(); });
-    $('speed').addEventListener('input', e => setBeta(+e.target.value));
-    $('vBtns').addEventListener('click', e => { const b = e.target.closest('button[data-b]'); if (b) setBeta(+b.dataset.b); });
+    $('speed').addEventListener('input', e => setV(+e.target.value));
+    $('vBtns').addEventListener('click', e => { const b = e.target.closest('button[data-b]'); if (b) setV(+b.dataset.b); });
     $('orient').addEventListener('click', e => {
       const b = e.target.closest('button[data-orientation]'); if (!b) return;
       const v = b.dataset.orientation === 'vertical'; if (v === state.vertical) return;
       state.vertical = v; configure(); reset();
     });
+    $('object').addEventListener('click', e => {
+      const b = e.target.closest('button[data-mode]'); if (b && b.dataset.mode !== state.mode) setMode(b.dataset.mode);
+    });
 
-    configure(); watch(render); update();
+    watch(render); setMode('light');
   })();
   </script>
 </body>
