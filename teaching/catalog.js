@@ -32,6 +32,14 @@ window.TEACHING = {
             { slug: 'lei-de-bragg',         name: 'Difração de raios X: lei de Bragg',
               desc: 'Famílias de planos em uma rede cristalina e a condição 2d·senθ = mλ para haver feixe difratado.' }
           ]
+        },
+        {
+          id: 'relatividade',
+          name: 'Relatividade',
+          sims: [
+            { slug: 'relogio-de-luz',       name: 'Relógio de luz em dois referenciais',
+              desc: 'Um pulso de luz vai ao espelho e volta, visto do vagão e da plataforma: dilatação do tempo e contração do comprimento.' }
+          ]
         }
       ]
     },
