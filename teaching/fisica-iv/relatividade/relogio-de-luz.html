@@ -14,6 +14,8 @@
     .phase[data-stage="ida"] { color: var(--w1); }
     .phase[data-stage="reflexao"], .phase[data-stage="volta"] { color: var(--hot); }
     .phase[data-stage="deteccao"] { color: #fff; background: var(--green); border-color: var(--green); }
+    .legend .obs { font-weight: 600; color: var(--primary); }
+    .legend [hidden] { display: none; }
     .legend .lout { color: var(--w1); } .legend .lback { color: var(--hot); }
     .fset { display: grid; gap: .5rem; justify-items: start; }
     .fset[hidden] { display: none; }
@@ -34,6 +36,7 @@
         <span class="lback"><i></i> volta</span>
         <span class="dash"><i></i> trajeto completo</span>
         <span>as duas cenas usam a mesma escala de distância</span>
+        <span class="obs" id="noGravity" hidden>Sem gravidade: a bolinha anda em linha reta, não faz um lançamento oblíquo.</span>
       </div>
 
       <div class="sheet grow" data-view="train">
@@ -154,8 +157,8 @@
         stages: { emissao: 'Lançamento', ida: 'Ida', reflexao: 'Rebate', volta: 'Volta', deteccao: 'Chegada' },
         parts: ['lançador e sensor', 'anteparo'], since: 'Tempo desde o lançamento', done: 'A bolinha chegou ao sensor nos dois referenciais.',
         notes: {
-          vertical: 'Bolinha lançada a 10 m/s em relação ao vagão, sem gravidade nem perdas no rebate. Na plataforma ela percorre uma diagonal mais longa, mas também é mais rápida, porque as velocidades se somam. O tempo de ida e volta é o mesmo nos dois referenciais.',
-          horizontal: 'Bolinha lançada a 10 m/s em relação ao vagão, sem gravidade nem perdas no rebate. Na plataforma ela é mais rápida na ida (u′ + v) e mais lenta na volta. O tempo de ida e volta e o comprimento do vagão são os mesmos nos dois referenciais.'
+          vertical: 'Sem gravidade: a bolinha vai e volta em linha reta, a 10 m/s em relação ao vagão, sem perdas no rebate. Na plataforma ela percorre uma diagonal mais longa, mas também é mais rápida, porque as velocidades se somam. O tempo de ida e volta é o mesmo nos dois referenciais.',
+          horizontal: 'Sem gravidade: a bolinha vai e volta em linha reta, a 10 m/s em relação ao vagão, sem perdas no rebate. Na plataforma ela é mais rápida na ida (u′ + v) e mais lenta na volta. O tempo de ida e volta e o comprimento do vagão são os mesmos nos dois referenciais.'
         }
       }
     };
@@ -366,6 +369,7 @@
       document.querySelectorAll('#vBtns button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.b === setting)));
       document.querySelectorAll('#orient button').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.orientation === 'vertical') === state.vertical)));
       document.querySelectorAll('#object button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode)));
+      $('noGravity').hidden = light;
       document.querySelectorAll('.fset').forEach(el => { el.hidden = el.dataset.for !== state.mode; });
     }
     const update = () => { updateText(); render(); };
